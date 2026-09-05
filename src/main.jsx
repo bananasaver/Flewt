@@ -1,6 +1,15 @@
-document.getElementById("root").innerHTML = `
-  <div style="padding:40px;font-family:Arial,sans-serif">
-    <h1>Flewt JavaScript is working</h1>
-    <p>The main.jsx module loaded successfully.</p>
-  </div>
-`;
+import React from "react";
+import ReactDOM from "react-dom/client";
+
+function Test() {
+  return (
+    <div style={{ padding: "40px", fontFamily: "Arial" }}>
+      <h1>Flewt React is working</h1>
+      <p>React has mounted successfully.</p>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <Test />
+);
