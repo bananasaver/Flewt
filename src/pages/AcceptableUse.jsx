@@ -1,1 +1,26 @@
-export default function AcceptableUse(){return <section className="section"><div className="container legal"><span className="eyebrow">Legal</span><h1 className="page-title">Acceptable Use</h1><p className="legal-updated">Draft for launch — review before publication.</p><h2>Don't misuse Flewt</h2><p>Do not use the service for unlawful activity, malware, fraud, harassment, infringement, or attempts to compromise the service or another person's systems or information.</p><h2>Documents</h2><p>You are responsible for ensuring you have the necessary rights to upload and process documents, images and other material.</p></section>}
+export default function AcceptableUse() {
+  return (
+    <section className="section">
+      <div className="container legal">
+        <span className="eyebrow">Legal</span>
+        <h1 className="page-title">Acceptable Use</h1>
+        <p className="legal-updated">
+          Draft for launch — review before publication.
+        </p>
+
+        <h2>Don't misuse Flewt</h2>
+        <p>
+          Do not use the service for unlawful activity, malware, fraud,
+          harassment, infringement, or attempts to compromise the service or
+          another person's systems or information.
+        </p>
+
+        <h2>Documents</h2>
+        <p>
+          You are responsible for ensuring you have the necessary rights to
+          upload and process documents, images and other material.
+        </p>
+      </div>
+    </section>
+  );
+}
