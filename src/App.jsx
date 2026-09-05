@@ -1,8 +1,9 @@
+import React from “react”;
+
 export default function App() {
-  return (
-    <div style={{ padding: "40px", fontFamily: "Arial" }}>
-      <h1>Flewt is working</h1>
-      <p>The React application has successfully mounted.</p>
-    </div>
-  );
+return (
+<div style={{ padding: “40px”, fontFamily: “Arial” }}>
+Flewt App is working
+App.jsx loaded successfully.
+);
 }
