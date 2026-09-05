@@ -1,13 +1,8 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
-import App from "./App";
-import "./styles.css";
+const root = document.getElementById("root");
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </React.StrictMode>
-);
+root.innerHTML = `
+  <div style="padding:40px;font-family:Arial,sans-serif">
+    <h1>Flewt test</h1>
+    <p>If you can see this, index.html and the deployed JavaScript are working.</p>
+  </div>
+`;
