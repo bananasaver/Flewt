@@ -1,2 +1,0 @@
-import { Link } from "react-router-dom";
-export default function Login(){return <section className="section"><div className="auth-card"><span className="eyebrow">Account</span><h1>Log in</h1><p>Account authentication will be connected when the secure backend is added.</p><form><label>Email<input type="email" required /></label><label>Password<input type="password" required /></label><button className="button button-dark full">Log in</button></form><p className="auth-foot">New to Flewt? <Link to="/signup">Create an account</Link></p></div></section>}
