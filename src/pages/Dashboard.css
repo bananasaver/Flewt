@@ -1,0 +1,10 @@
+.dashboard-page { padding: 56px 0 80px; }
+.dashboard-page .tool-header { max-width: 620px; margin-bottom: 32px; }
+.dashboard-page .tool-header h1 { font-size: 30px; margin-bottom: 8px; font-family: var(--font-display); font-weight: 900; }
+.dashboard-page .tool-header p { color: #556; }
+.dashboard-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.dash-card { background: var(--white); border: 1.5px solid var(--mist); border-radius: 12px; padding: 28px; }
+.dash-card h3 { font-size: 16px; margin-bottom: 12px; color: var(--signal); }
+.dash-plan { font-family: var(--font-display); font-weight: 700; font-size: 20px; margin-bottom: 16px; }
+.dash-link { color: var(--signal); font-weight: 600; }
+@media (max-width: 640px) { .dashboard-cards { grid-template-columns: 1fr; } }
