@@ -1,10 +1,22 @@
 import { useState, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { apiUploadForFile } from '../api.js';
+import { useActionGate } from '../hooks/useActionGate.js';
+import PaygCheckout from './PaygCheckout.jsx';
 import './ToolRunner.css';
 
-// Generic runner shared by every tool page. Each tool passes its own config:
-// endpoint, whether it accepts multiple files, and any extra option fields.
-export default function ToolRunner({ endpoint, multiple = false, accept = '.pdf', extraFields = [], helpText }) {
+// Generic runner shared by most single-file-in, single-file-out tools. Each tool
+// passes its own config: endpoint, whether it accepts multiple files, and any extra
+// option fields. Batch (multiple files at once) is only allowed for Pro accounts —
+// the server enforces this too, but we check client-side for a clean error.
+export default function ToolRunner({
+  endpoint,
+  multiple = false,
+  accept = '.pdf',
+  extraFields = [],
+  helpText,
+  batchNote = 'Selecting more than one file at once is a Pro batch-processing feature.',
+}) {
   const [files, setFiles] = useState([]);
   const [options, setOptions] = useState(() =>
     Object.fromEntries(extraFields.map((f) => [f.name, f.default || '']))
@@ -13,6 +25,7 @@ export default function ToolRunner({ endpoint, multiple = false, accept = '.pdf'
   const [error, setError] = useState('');
   const [resultName, setResultName] = useState('');
   const inputRef = useRef(null);
+  const { user, needsAuth, priceLabel, showCheckout, gate, onPaid, cancelCheckout } = useActionGate();
 
   const handleFiles = (list) => {
     const arr = Array.from(list);
@@ -26,11 +39,7 @@ export default function ToolRunner({ endpoint, multiple = false, accept = '.pdf'
     handleFiles(e.dataTransfer.files);
   };
 
-  const run = async () => {
-    if (files.length === 0) {
-      setError('Add a PDF to get started.');
-      return;
-    }
+  const doRun = async (paymentIntentId) => {
     setLoading(true);
     setError('');
     setResultName('');
@@ -43,6 +52,10 @@ export default function ToolRunner({ endpoint, multiple = false, accept = '.pdf'
         formData.append('file', files[0]);
       }
       Object.entries(options).forEach(([k, v]) => formData.append(k, v));
+      extraFields.forEach((f) => {
+        if (f.getValue) formData.set(f.name, f.getValue());
+      });
+      if (paymentIntentId) formData.append('paymentIntentId', paymentIntentId);
 
       const { blob, filename } = await apiUploadForFile(endpoint, formData);
       const url = URL.createObjectURL(blob);
@@ -59,6 +72,18 @@ export default function ToolRunner({ endpoint, multiple = false, accept = '.pdf'
     } finally {
       setLoading(false);
     }
+  };
+
+  const run = () => {
+    if (files.length === 0) {
+      setError('Add a file to get started.');
+      return;
+    }
+    if (multiple && files.length > 1 && user?.plan !== 'pro') {
+      setError(batchNote);
+      return;
+    }
+    gate(doRun);
   };
 
   return (
@@ -79,7 +104,7 @@ export default function ToolRunner({ endpoint, multiple = false, accept = '.pdf'
         />
         {files.length === 0 ? (
           <>
-            <p className="dropzone-title">Drop your {multiple ? 'PDFs' : 'PDF'} here</p>
+            <p className="dropzone-title">Drop your {multiple ? 'files' : 'file'} here</p>
             <p className="dropzone-sub">or click to browse · up to 50MB per file</p>
           </>
         ) : (
@@ -91,9 +116,9 @@ export default function ToolRunner({ endpoint, multiple = false, accept = '.pdf'
         )}
       </div>
 
-      {extraFields.length > 0 && (
+      {extraFields.filter((f) => !f.getValue && !f.hidden).length > 0 && (
         <div className="tool-options">
-          {extraFields.map((f) => (
+          {extraFields.filter((f) => !f.getValue && !f.hidden).map((f) => (
             <div className="field" key={f.name}>
               <label>{f.label}</label>
               {f.type === 'select' ? (
@@ -123,9 +148,21 @@ export default function ToolRunner({ endpoint, multiple = false, accept = '.pdf'
         <div className="success-banner">Done — "{resultName}" downloaded.</div>
       )}
 
-      <button className="btn btn-flash" onClick={run} disabled={loading}>
-        {loading ? 'Working…' : 'Run tool'}
-      </button>
+      {needsAuth ? (
+        <p className="tool-help">
+          <Link to="/signup" className="btn btn-flash" style={{ marginRight: 10 }}>Sign up</Link>
+          <Link to="/login" className="btn btn-outline">Log in</Link> to use this tool.
+        </p>
+      ) : showCheckout ? (
+        <PaygCheckout onSuccess={onPaid} onCancel={cancelCheckout} />
+      ) : (
+        <>
+          <p className="price-line">{priceLabel}</p>
+          <button className="btn btn-flash" onClick={run} disabled={loading}>
+            {loading ? 'Working…' : 'Run tool'}
+          </button>
+        </>
+      )}
 
       {helpText && <p className="tool-help">{helpText}</p>}
     </div>

@@ -32,7 +32,7 @@ export default function Navbar() {
           ) : (
             <>
               <Link to="/login" className="nav-link">Log in</Link>
-              <Link to="/signup" className="btn btn-flash nav-btn">Sign up free</Link>
+              <Link to="/signup" className="btn btn-flash nav-btn">Sign up</Link>
             </>
           )}
         </div>

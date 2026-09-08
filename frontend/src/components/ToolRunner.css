@@ -16,3 +16,27 @@
 .file-list li { padding: 4px 0; }
 .tool-options { background: var(--white); border: 1px solid var(--mist); border-radius: 10px; padding: 20px; margin-bottom: 20px; }
 .tool-help { font-size: 13px; color: #667; margin-top: 16px; max-width: 480px; }
+
+.price-line {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--signal);
+  margin-bottom: 12px;
+}
+.payg-checkout {
+  background: var(--white);
+  border: 1px solid var(--mist);
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 420px;
+}
+.payg-actions { display: flex; gap: 10px; margin-top: 14px; }
+.currency-switcher {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1.5px solid var(--mist);
+  background: var(--white);
+  font-size: 13px;
+  font-weight: 600;
+  width: auto;
+}
