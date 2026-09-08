@@ -19,7 +19,8 @@ export function requireAuth(req, res, next) {
 }
 
 // Attaches req.user if a valid token is present, but doesn't block the request otherwise.
-// Used on tool routes so free/anonymous use still works, but logged-in users get their plan limits applied.
+// Not used on tool execution routes (those require an account, since every action is billed
+// to a plan or a one-off charge) — kept for pages that behave slightly differently when logged in.
 export function optionalAuth(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
