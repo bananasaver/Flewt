@@ -17,3 +17,23 @@
 .tool-card:hover { border-color: var(--flash); transform: translateY(-2px); }
 .tool-card h3 { font-size: 18px; margin-bottom: 8px; }
 .tool-card p { color: #556; font-size: 14px; }
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+.category-card {
+  background: var(--white);
+  border: 1.5px solid var(--mist);
+  border-radius: 12px;
+  padding: 28px 24px;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.category-card:hover { border-color: var(--flash); transform: translateY(-2px); }
+.category-icon { color: var(--flash-dim); margin-bottom: 16px; }
+.category-card h3 { font-size: 19px; margin-bottom: 6px; }
+.category-card p { color: #556; font-size: 14px; }
+.tools-more-note { margin-top: 40px; color: #778; font-size: 14px; font-style: italic; }
+.category-back { display: inline-block; font-size: 13px; font-weight: 600; color: var(--signal); margin-bottom: 16px; }
+.category-header-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }

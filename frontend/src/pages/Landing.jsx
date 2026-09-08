@@ -1,20 +1,12 @@
 import { Link } from 'react-router-dom';
+import Icon from '../components/Icon.jsx';
+import { CATEGORIES } from '../toolRegistry.js';
 import './Landing.css';
 
-const TOOLS = [
-  { to: '/tools/pdf-to-word', name: 'PDF to Word', desc: 'Text PDFs into editable .docx files.' },
-  { to: '/tools/merge', name: 'Merge PDFs', desc: 'Combine files into one, in order.' },
-  { to: '/tools/split', name: 'Split a PDF', desc: 'Break pages out into their own files.' },
-  { to: '/tools/compress', name: 'Compress a PDF', desc: 'Smaller files, easier to send.' },
-  { to: '/tools/rotate', name: 'Rotate pages', desc: 'Fix sideways or upside-down scans.' },
-  { to: '/tools/watermark', name: 'Add a watermark', desc: 'Stamp text across every page.' },
-  { to: '/tools/edit', name: 'Add text', desc: 'Drop a note, label, or fill-in onto a page.' },
-];
-
 const STEPS = [
-  { n: 1, title: 'Drop your file in', desc: 'No install, no account required to try a tool.' },
-  { n: 2, title: 'Pick your settings', desc: "Only the options that matter for that tool — nothing else." },
-  { n: 3, title: 'Download instantly', desc: 'Your file processes and downloads straight back to you.' },
+  { n: 1, title: 'Pick a category', desc: 'Document management, PDF management, speech to text, image tools.' },
+  { n: 2, title: 'Use the tool', desc: 'No sign-up detour, no tier gate — just get straight to it.' },
+  { n: 3, title: 'See the price, confirm, done', desc: "$1 pay-as-you-go, or it's included in your plan — you'll always see it before it runs." },
 ];
 
 export default function Landing() {
@@ -23,15 +15,14 @@ export default function Landing() {
       <section className="hero">
         <div className="hero-streak" aria-hidden="true" />
         <div className="wrap hero-inner">
-          <h1 className="hero-headline">
-            PDF tools that keep up with you.
-          </h1>
+          <h1 className="hero-headline">Fly through your workflow.</h1>
           <p className="hero-sub">
-            Convert, merge, split, and edit PDFs in seconds — at a fraction of what Adobe,
-            Smallpdf, or iLovePDF charge. No bloated subscriptions, no surprise upsells.
+            Flewt is a fast, no-clutter set of tools for the everyday tasks that slow
+            people down — document and PDF management, speech to text, and more — at a
+            fraction of what the big names charge. Pay per action, or pick a plan.
           </p>
           <div className="hero-actions">
-            <Link to="/tools" className="btn btn-flash">Try a tool free</Link>
+            <Link to="/tools" className="btn btn-flash">Browse tools</Link>
             <Link to="/pricing" className="btn btn-ghost-paper">See pricing</Link>
           </div>
         </div>
@@ -39,16 +30,18 @@ export default function Landing() {
 
       <section className="wrap section">
         <div className="section-head">
-          <h2>Every tool you'd expect. None of the markup.</h2>
+          <h2>Tools for what people actually need, not just what software has.</h2>
         </div>
-        <div className="tool-row">
-          {TOOLS.map((t) => (
-            <Link to={t.to} key={t.to} className="tool-item">
-              <span className="tool-item-name">{t.name}</span>
-              <span className="tool-item-desc">{t.desc}</span>
+        <div className="category-grid">
+          {CATEGORIES.map((c) => (
+            <Link to={`/tools/${c.slug}`} key={c.slug} className="category-card">
+              <Icon name={c.icon} className="category-icon" />
+              <h3>{c.name}</h3>
+              <p>{c.tagline}</p>
             </Link>
           ))}
         </div>
+        <p className="landing-more-note">Templates, fonts management, and more — coming soon.</p>
       </section>
 
       <section className="section-alt">
@@ -71,7 +64,7 @@ export default function Landing() {
       <section className="wrap section pricing-teaser">
         <div className="section-head">
           <h2>Priced for actually using it</h2>
-          <p>Free for light use. One paid plan when you need more — no tiers to decode.</p>
+          <p>$1 pay-as-you-go for a single action, or a monthly plan from $3.99 — no tiers to decode, no free-trial games.</p>
         </div>
         <Link to="/pricing" className="btn btn-outline">Compare plans</Link>
       </section>

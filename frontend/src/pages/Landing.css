@@ -79,3 +79,21 @@
   .hero-headline { font-size: 38px; }
   .hero-streak { display: none; }
 }
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+.category-card {
+  background: var(--white);
+  border: 1.5px solid var(--mist);
+  border-radius: 12px;
+  padding: 28px 24px;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.category-card:hover { border-color: var(--flash); transform: translateY(-2px); }
+.category-icon { color: var(--flash-dim); margin-bottom: 16px; }
+.category-card h3 { font-size: 19px; margin-bottom: 6px; }
+.category-card p { color: #556; font-size: 14px; }
+.landing-more-note { margin-top: 28px; color: #778; font-size: 14px; font-style: italic; }

@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useCurrency } from '../context/CurrencyContext.jsx';
 import { apiPost } from '../api.js';
-import QuickPayButton from '../components/QuickPayButton.jsx';
+import CurrencySwitcher from '../components/CurrencySwitcher.jsx';
 import './Pricing.css';
 
 const ROWS = [
-  { label: 'Price per month', flewt: '$3.99', adobe: '$19.99', smallpdf: '$12.00', ilovepdf: '$9.00' },
-  { label: 'PDF to Word / Office', flewt: true, adobe: true, smallpdf: true, ilovepdf: true },
-  { label: 'Merge, split, rotate', flewt: true, adobe: true, smallpdf: true, ilovepdf: true },
-  { label: 'Watermark & basic edit', flewt: true, adobe: true, smallpdf: true, ilovepdf: true },
-  { label: 'Daily free tool runs', flewt: '5', adobe: '2', smallpdf: '2', ilovepdf: '2' },
+  { label: 'Entry price', flewt: '$1 / action', adobe: '$19.99/mo', smallpdf: '$12.00/mo', ilovepdf: '$9.00/mo' },
+  { label: 'Unlimited plan', flewt: '$10.99/mo', adobe: '$19.99/mo', smallpdf: '$12.00/mo', ilovepdf: '$9.00/mo' },
+  { label: 'No subscription required', flewt: true, adobe: false, smallpdf: false, ilovepdf: false },
+  { label: 'Batch processing', flewt: 'Pro only', adobe: true, smallpdf: true, ilovepdf: true },
   { label: 'No forced trial-to-cancel', flewt: true, adobe: false, smallpdf: false, ilovepdf: false },
 ];
 
@@ -20,63 +20,81 @@ function Cell({ value }) {
   return <span>{value}</span>;
 }
 
+const PRICES = {
+  USD: { symbol: '$', payg: '1', mid: '3.99', pro: '10.99' },
+  GBP: { symbol: '£', payg: '1', mid: '3.99', pro: '10.99' },
+  EUR: { symbol: '€', payg: '1', mid: '3.99', pro: '10.99' },
+};
+
 export default function Pricing() {
   const { user } = useAuth();
+  const { currency } = useCurrency();
   const navigate = useNavigate();
-  const [interval, setInterval_] = useState('monthly');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState('');
+  const prices = PRICES[currency] || PRICES.USD;
 
-  const startCheckout = async () => {
+  const upgrade = async (plan) => {
     if (!user) {
       navigate('/signup');
       return;
     }
-    setLoading(true);
+    setLoading(plan);
     setError('');
     try {
-      const { url } = await apiPost('/billing/create-checkout-session', { interval });
+      const { url } = await apiPost('/billing/create-checkout-session', { plan, currency });
       window.location.href = url;
     } catch (err) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      setLoading('');
     }
   };
 
   return (
     <div className="wrap pricing-page">
       <div className="tool-header">
-        <h1>Simple pricing, real savings</h1>
-        <p>One paid plan. No feature-gating games, no auto-renew tricks.</p>
-      </div>
-
-      <div className="plan-toggle">
-        <button className={interval === 'monthly' ? 'active' : ''} onClick={() => setInterval_('monthly')}>Monthly</button>
-        <button className={interval === 'yearly' ? 'active' : ''} onClick={() => setInterval_('yearly')}>Yearly (save ~20%)</button>
-      </div>
-
-      <div className="plan-cards">
-        <div className="plan-card">
-          <h3>Free</h3>
-          <div className="plan-price">$0</div>
-          <p>5 tool runs a day. No card needed.</p>
-          <button className="btn btn-outline" onClick={() => navigate('/signup')}>Start free</button>
+        <div className="pricing-header-row">
+          <h1>Simple pricing, real savings</h1>
+          <CurrencySwitcher />
         </div>
+        <p>Pay per action with no account commitment, or pick a plan once you're using Flewt regularly.</p>
+      </div>
+
+      {error && <div className="error-banner" style={{ marginBottom: 16 }}>{error}</div>}
+
+      <div className="plan-cards plan-cards-3">
+        <div className="plan-card">
+          <h3>Pay as you go</h3>
+          <div className="plan-price">{prices.symbol}{prices.payg}<span className="plan-price-unit">/action</span></div>
+          <p>No subscription. Confirm the price right before each tool runs.</p>
+          <button className="btn btn-outline" onClick={() => navigate(user ? '/tools' : '/signup')}>
+            {user ? 'Browse tools' : 'Create free account'}
+          </button>
+        </div>
+
+        <div className="plan-card">
+          <h3>Mid</h3>
+          <div className="plan-price">{prices.symbol}{prices.mid}<span className="plan-price-unit">/mo</span></div>
+          <p>50 actions included every month. Single-file tools only.</p>
+          <button className="btn btn-outline" onClick={() => upgrade('mid')} disabled={loading === 'mid'}>
+            {loading === 'mid' ? 'Redirecting…' : 'Choose Mid'}
+          </button>
+        </div>
+
         <div className="plan-card plan-card-pro">
           <h3>Pro</h3>
-          <div className="plan-price">{interval === 'monthly' ? '$3.99/mo' : '$38/yr'}</div>
-          <p>Unlimited tool runs, no daily caps, priority processing.</p>
-          {error && <div className="error-banner">{error}</div>}
-          <button className="btn btn-flash" onClick={startCheckout} disabled={loading}>
-            {loading ? 'Redirecting…' : 'Upgrade with card'}
+          <div className="plan-price">{prices.symbol}{prices.pro}<span className="plan-price-unit">/mo</span></div>
+          <p>Unlimited actions, plus batch processing — select many files, run one action.</p>
+          <button className="btn btn-flash" onClick={() => upgrade('pro')} disabled={loading === 'pro'}>
+            {loading === 'pro' ? 'Redirecting…' : 'Choose Pro'}
           </button>
-          <div className="quickpay-wrap">
-            <QuickPayButton amountCents={interval === 'monthly' ? 399 : 3800} label="Flewt Pro" />
-          </div>
-          <p className="plan-note">Apple Pay / Google Pay shown automatically where supported.</p>
         </div>
       </div>
+
+      <p className="plan-note" style={{ marginTop: 8 }}>
+        Card, Apple Pay, and Google Pay are all available at checkout — Stripe shows whichever your device supports.
+      </p>
 
       <div className="compare-table-wrap">
         <h2>How we compare</h2>

@@ -49,13 +49,17 @@ export default function Dashboard() {
       <div className="dashboard-cards">
         <div className="dash-card">
           <h3>Plan</h3>
-          <p className="dash-plan">{user.plan === 'pro' ? 'Pro — unlimited' : 'Free — 5 runs/day'}</p>
-          {user.plan === 'pro' ? (
+          <p className="dash-plan">
+            {user.plan === 'pro' && 'Pro — unlimited + batch processing'}
+            {user.plan === 'mid' && `Mid — ${user.monthly_actions_used ?? 0}/50 actions used this month`}
+            {(!user.plan || user.plan === 'payg') && 'Pay as you go — $1/£1/€1 per action'}
+          </p>
+          {user.plan === 'pro' || user.plan === 'mid' ? (
             <button className="btn btn-outline" onClick={openPortal} disabled={loading}>
               {loading ? 'Opening…' : 'Manage billing'}
             </button>
           ) : (
-            <Link to="/pricing" className="btn btn-flash">Upgrade to Pro</Link>
+            <Link to="/pricing" className="btn btn-flash">See plans</Link>
           )}
         </div>
 

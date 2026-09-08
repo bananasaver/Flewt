@@ -1,31 +1,25 @@
 import { Link } from 'react-router-dom';
+import Icon from '../components/Icon.jsx';
+import { CATEGORIES } from '../toolRegistry.js';
 import './Tools.css';
-
-const TOOLS = [
-  { to: '/tools/pdf-to-word', name: 'PDF to Word', desc: 'Convert PDF text into an editable .docx file.' },
-  { to: '/tools/merge', name: 'Merge PDFs', desc: 'Combine multiple PDFs into one, in order.' },
-  { to: '/tools/split', name: 'Split a PDF', desc: 'Break a PDF into individual page files.' },
-  { to: '/tools/compress', name: 'Compress a PDF', desc: 'Shrink file size for easier sharing.' },
-  { to: '/tools/rotate', name: 'Rotate pages', desc: 'Rotate every page 90°, 180°, or 270°.' },
-  { to: '/tools/watermark', name: 'Add a watermark', desc: 'Stamp diagonal text across every page.' },
-  { to: '/tools/edit', name: 'Add text', desc: 'Drop a line of text onto any page.' },
-];
 
 export default function Tools() {
   return (
     <div className="wrap tools-page">
       <div className="tool-header">
-        <h1>All tools</h1>
-        <p>Free plan includes 5 tool runs a day. Upgrade any time for unlimited use.</p>
+        <h1>Every tool, grouped by what you're trying to get done.</h1>
+        <p>Pick a category, then just use a tool directly — you'll see the price right before it runs.</p>
       </div>
-      <div className="tools-grid">
-        {TOOLS.map((t) => (
-          <Link to={t.to} key={t.to} className="tool-card">
-            <h3>{t.name}</h3>
-            <p>{t.desc}</p>
+      <div className="category-grid">
+        {CATEGORIES.map((c) => (
+          <Link to={`/tools/${c.slug}`} key={c.slug} className="category-card">
+            <Icon name={c.icon} className="category-icon" />
+            <h3>{c.name}</h3>
+            <p>{c.tagline}</p>
           </Link>
         ))}
       </div>
+      <p className="tools-more-note">Templates, fonts management, and more — coming soon.</p>
     </div>
   );
 }
