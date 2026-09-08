@@ -3,6 +3,9 @@ import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth.js';
 import pdfRoutes from './routes/pdf.js';
+import imageRoutes from './routes/image.js';
+import speechRoutes from './routes/speech.js';
+import contactRoutes from './routes/contact.js';
 import billingRoutes, { webhookHandler } from './routes/billing.js';
 
 const app = express();
@@ -19,6 +22,9 @@ app.get('/api/health', (req, res) => res.json({ ok: true, name: 'Flewt API' }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/pdf', pdfRoutes);
+app.use('/api/image', imageRoutes);
+app.use('/api/speech', speechRoutes);
+app.use('/api/contact', contactRoutes);
 app.use('/api/billing', billingRoutes);
 
 // Fallback error handler
