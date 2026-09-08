@@ -1,21 +1,41 @@
 import { Router } from 'express';
 import Stripe from 'stripe';
-import express from 'express';
 import db from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// ---- Subscriptions (Stripe Checkout) ----
-// Standard card checkout for the Pro plan. Redirects to Stripe's hosted page.
+// Stripe Prices are each tied to a single currency, so each subscription tier needs
+// one Price ID per currency you support. Set these in .env — see .env.example.
+const SUBSCRIPTION_PRICE_IDS = {
+  mid: { USD: process.env.STRIPE_PRICE_MID_USD, GBP: process.env.STRIPE_PRICE_MID_GBP, EUR: process.env.STRIPE_PRICE_MID_EUR },
+  pro: { USD: process.env.STRIPE_PRICE_PRO_USD, GBP: process.env.STRIPE_PRICE_PRO_GBP, EUR: process.env.STRIPE_PRICE_PRO_EUR },
+};
+
+// PAYG is a flat 1 unit of whichever currency, charged per action — no Stripe Price
+// object needed, since the amount never changes.
+const PAYG_AMOUNT = { USD: 100, GBP: 100, EUR: 100 }; // cents/pence, i.e. $1 / £1 / €1
+
+function currencyOrDefault(currency) {
+  const c = (currency || 'USD').toUpperCase();
+  return ['USD', 'GBP', 'EUR'].includes(c) ? c : 'USD';
+}
+
+// ---- Subscriptions (Mid / Pro) via Stripe Checkout ----
 router.post('/create-checkout-session', requireAuth, async (req, res) => {
   try {
-    const { interval } = req.body; // 'monthly' | 'yearly'
-    const priceId =
-      interval === 'yearly'
-        ? process.env.STRIPE_PRICE_PRO_YEARLY
-        : process.env.STRIPE_PRICE_PRO_MONTHLY;
+    const { plan, currency } = req.body; // plan: 'mid' | 'pro'
+    if (!['mid', 'pro'].includes(plan)) {
+      return res.status(400).json({ error: 'Invalid plan.' });
+    }
+    const cur = currencyOrDefault(currency);
+    const priceId = SUBSCRIPTION_PRICE_IDS[plan][cur];
+    if (!priceId) {
+      return res.status(500).json({
+        error: `No Stripe price configured for ${plan}/${cur} yet. Add it to .env once your Stripe products are set up.`,
+      });
+    }
 
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
     let customerId = user.stripe_customer_id;
@@ -30,6 +50,7 @@ router.post('/create-checkout-session', requireAuth, async (req, res) => {
       mode: 'subscription',
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
+      metadata: { plan },
       success_url: `${process.env.CLIENT_URL}/dashboard?upgraded=1`,
       cancel_url: `${process.env.CLIENT_URL}/pricing`,
     });
@@ -41,7 +62,7 @@ router.post('/create-checkout-session', requireAuth, async (req, res) => {
   }
 });
 
-// Lets an existing subscriber manage or cancel billing via Stripe's hosted portal.
+// Lets an existing subscriber manage/cancel/switch plan via Stripe's hosted portal.
 router.post('/create-portal-session', requireAuth, async (req, res) => {
   try {
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
@@ -59,14 +80,42 @@ router.post('/create-portal-session', requireAuth, async (req, res) => {
   }
 });
 
-// ---- Quick pay: Apple Pay / Google Pay / card via the Payment Request Button ----
-// One Payment Intent works for Apple Pay, Google Pay, and card — Stripe.js detects
-// what the visitor's browser/device supports and shows the right button automatically.
-// This path is for a one-time "Pro, paid up front" style charge; wire the same pattern
-// to a subscription with Stripe's Setup Intents if you'd rather charge recurring via quick pay.
-router.post('/create-payment-intent', async (req, res) => {
+// ---- PAYG: one action, one charge ----
+// Called right before a tool runs when the user is on the payg plan. Returns a
+// PaymentIntent client secret — the frontend confirms it (card, Apple Pay, or Google
+// Pay, via the same Payment Request Button used for quick pay), then sends the
+// resulting paymentIntentId along with the tool request so the server can verify
+// payment actually succeeded before doing the work.
+router.post('/payg/charge', requireAuth, async (req, res) => {
   try {
-    const { amount, currency = 'usd' } = req.body; // amount in cents, e.g. 499 = $4.99
+    const cur = currencyOrDefault(req.body.currency);
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: PAYG_AMOUNT[cur],
+      currency: cur.toLowerCase(),
+      automatic_payment_methods: { enabled: true },
+      metadata: { userId: req.user.id, kind: 'payg_action' },
+    });
+    res.json({ clientSecret: paymentIntent.client_secret, paymentIntentId: paymentIntent.id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Couldn't start payment. Please try again." });
+  }
+});
+
+// Verifies a PaymentIntent actually succeeded and belongs to this user, before a tool
+// route does the real work. Exported so pdf.js/image.js/speech.js routes can call it directly.
+export async function verifyPaygPayment(paymentIntentId, userId) {
+  if (!paymentIntentId) return false;
+  const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
+  return intent.status === 'succeeded' && intent.metadata.userId === userId && intent.metadata.kind === 'payg_action';
+}
+
+// ---- Quick pay button (Apple Pay / Google Pay / card) for subscription upgrades ----
+// Kept generic so the same Payment Request Button component can be reused for a
+// one-off subscription "pay up front" flow if you want that later.
+router.post('/create-payment-intent', requireAuth, async (req, res) => {
+  try {
+    const { amount, currency = 'usd' } = req.body; // amount in cents
     if (!amount || amount < 50) {
       return res.status(400).json({ error: 'Invalid amount.' });
     }
@@ -83,8 +132,6 @@ router.post('/create-payment-intent', async (req, res) => {
 });
 
 // ---- Webhook ----
-// Keeps the local plan/status in sync with what Stripe reports.
-// Mounted with express.raw() in server.js — signature verification needs the raw body.
 export const webhookHandler = async (req, res) => {
   const sig = req.headers['stripe-signature'];
   let event;
@@ -101,21 +148,27 @@ export const webhookHandler = async (req, res) => {
       const session = event.data.object;
       const user = db.prepare('SELECT * FROM users WHERE stripe_customer_id = ?').get(session.customer);
       if (user) {
+        const plan = session.metadata?.plan === 'mid' ? 'mid' : 'pro';
         db.prepare('UPDATE users SET plan = ?, stripe_subscription_id = ? WHERE id = ?').run(
-          'pro',
+          plan,
           session.subscription,
           user.id
         );
       }
       break;
     }
-    case 'customer.subscription.deleted':
+    case 'customer.subscription.deleted': {
+      const sub = event.data.object;
+      const user = db.prepare('SELECT * FROM users WHERE stripe_customer_id = ?').get(sub.customer);
+      if (user) db.prepare('UPDATE users SET plan = ? WHERE id = ?').run('payg', user.id);
+      break;
+    }
     case 'customer.subscription.updated': {
       const sub = event.data.object;
       const user = db.prepare('SELECT * FROM users WHERE stripe_customer_id = ?').get(sub.customer);
       if (user) {
         const isActive = sub.status === 'active' || sub.status === 'trialing';
-        db.prepare('UPDATE users SET plan = ? WHERE id = ?').run(isActive ? 'pro' : 'free', user.id);
+        if (!isActive) db.prepare('UPDATE users SET plan = ? WHERE id = ?').run('payg', user.id);
       }
       break;
     }

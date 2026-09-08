@@ -20,6 +20,8 @@ function publicUser(user) {
     id: user.id,
     email: user.email,
     plan: user.plan,
+    currency: user.currency,
+    monthly_actions_used: user.monthly_actions_used,
     createdAt: user.created_at,
   };
 }
@@ -43,7 +45,7 @@ router.post('/signup', async (req, res) => {
   const passwordHash = await bcrypt.hash(password, 10);
 
   db.prepare(
-    `INSERT INTO users (id, email, password_hash, plan) VALUES (?, ?, ?, 'free')`
+    `INSERT INTO users (id, email, password_hash, plan) VALUES (?, ?, ?, 'payg')`
   ).run(id, email.toLowerCase(), passwordHash);
 
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
