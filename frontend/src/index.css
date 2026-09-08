@@ -1,18 +1,21 @@
 /* ---- Flewt design tokens ----
-   Ink:      #12141C  primary dark / text
-   Paper:    #EEF0F2  cool light base (not cream)
-   Flash:    #FF4D1C  vivid accent — used sparingly for CTAs + the speed-streak motif
-   Signal:   #1E3A5F  deep blue — secondary accent, links
-   Mist:     #C7CCD4  borders / dividers
+   Ink:      #1B2130  charcoal-navy / text, hero background
+   Slate:    #3D4A73  blue-grey nav bar
+   Paper:    #EEF1F5  cool light base
+   Flash:    #6E8FE3  cornflower blue — accent, CTAs, the speed-streak motif
+   Flash-dim:#4F6FC4  accent hover state
+   Signal:   #2A3C63  deep blue-grey — links, labels
+   Mist:     #C9CFDB  borders / dividers
    White:    #FFFFFF
 */
 :root {
-  --ink: #12141c;
-  --paper: #eef0f2;
-  --flash: #ff4d1c;
-  --flash-dim: #d43e14;
-  --signal: #1e3a5f;
-  --mist: #c7ccd4;
+  --ink: #1b2130;
+  --slate: #3d4a73;
+  --paper: #eef1f5;
+  --flash: #6e8fe3;
+  --flash-dim: #4f6fc4;
+  --signal: #2a3c63;
+  --mist: #c9cfdb;
   --white: #ffffff;
 
   --font-display: 'Archivo', sans-serif;
