@@ -62,3 +62,20 @@ export async function apiUploadForJson(path, formData) {
   if (!res.ok) throw await parseError(res);
   return res.json();
 }
+
+// Like apiPost, but for endpoints that build and return a file (e.g. the invoice
+// builder) rather than JSON — no file upload involved, just a JSON body in, a file out.
+export async function apiPostForBlob(path, body) {
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw await parseError(res);
+
+  const disposition = res.headers.get('Content-Disposition') || '';
+  const match = disposition.match(/filename="(.+)"/);
+  const filename = match ? match[1] : 'download';
+  const blob = await res.blob();
+  return { blob, filename };
+}

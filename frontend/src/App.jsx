@@ -28,6 +28,10 @@ import OfficeToPdf from './pages/tools/OfficeToPdf.jsx';
 import FillForm from './pages/tools/FillForm.jsx';
 import DrawSign from './pages/tools/DrawSign.jsx';
 import ScanCleanup from './pages/tools/ScanCleanup.jsx';
+import PhotosToPdf from './pages/tools/PhotosToPdf.jsx';
+import HandwritingToText from './pages/tools/HandwritingToText.jsx';
+import DigitalStamp from './pages/tools/DigitalStamp.jsx';
+import InvoiceBuilder from './pages/tools/InvoiceBuilder.jsx';
 import VoiceToText from './pages/tools/VoiceToText.jsx';
 import VoiceToPdf from './pages/tools/VoiceToPdf.jsx';
 import ShrinkImage from './pages/tools/ShrinkImage.jsx';
@@ -60,6 +64,10 @@ export default function App() {
           <Route path="/tools/fill-form" element={<FillForm />} />
           <Route path="/tools/sign" element={<DrawSign />} />
           <Route path="/tools/scan-cleanup" element={<ScanCleanup />} />
+          <Route path="/tools/photos-to-pdf" element={<PhotosToPdf />} />
+          <Route path="/tools/handwriting-to-text" element={<HandwritingToText />} />
+          <Route path="/tools/stamp" element={<DigitalStamp />} />
+          <Route path="/tools/invoice" element={<InvoiceBuilder />} />
 
           {/* Speech to Text */}
           <Route path="/tools/voice-to-text" element={<VoiceToText />} />
