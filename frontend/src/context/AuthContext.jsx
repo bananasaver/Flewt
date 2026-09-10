@@ -36,6 +36,24 @@ export function AuthProvider({ children }) {
     setUser(data.user);
   }, []);
 
+  // Testing-only: flips the current account's plan without Stripe. Requires the
+  // ADMIN_TEST_SECRET set in backend/.env — see Dashboard's "Testing" panel.
+  const setPlanForTesting = useCallback(async (plan, secret) => {
+    const res = await fetch(`/api/auth/dev-set-plan`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('flewt_token')}`,
+        'x-admin-secret': secret,
+      },
+      body: JSON.stringify({ plan }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not switch plan.');
+    persist(data.token, data.user);
+    return data.user;
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem('flewt_token');
     localStorage.removeItem('flewt_user');
@@ -44,7 +62,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ token, user, signup, login, logout, refreshUser }}>
+    <AuthContext.Provider value={{ token, user, signup, login, logout, refreshUser, setPlanForTesting }}>
       {children}
     </AuthContext.Provider>
   );
