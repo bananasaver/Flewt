@@ -6,7 +6,7 @@ import { useCurrency } from '../context/CurrencyContext.jsx';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
-function PaygForm({ onSuccess, onCancel }) {
+function UnlockForm({ category, paymentIntentId, onSuccess, onCancel }) {
   const stripe = useStripe();
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
@@ -20,15 +20,23 @@ function PaygForm({ onSuccess, onCancel }) {
       elements,
       redirect: 'if_required',
     });
-    setSubmitting(false);
     if (stripeError) {
+      setSubmitting(false);
       setError(stripeError.message || 'Payment failed. Please try again.');
       return;
     }
-    if (paymentIntent?.status === 'succeeded') {
-      onSuccess(paymentIntent.id);
-    } else {
+    if (paymentIntent?.status !== 'succeeded') {
+      setSubmitting(false);
       setError('Payment did not complete. Please try again.');
+      return;
+    }
+    try {
+      await apiPost('/billing/payg/confirm-category-pass', { paymentIntentId, category });
+      onSuccess();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -38,7 +46,7 @@ function PaygForm({ onSuccess, onCancel }) {
       {error && <div className="error-banner">{error}</div>}
       <div className="payg-actions">
         <button className="btn btn-flash" onClick={confirm} disabled={submitting || !stripe}>
-          {submitting ? 'Confirming…' : 'Pay & run'}
+          {submitting ? 'Confirming…' : 'Pay $1 & unlock'}
         </button>
         <button className="btn btn-outline" onClick={onCancel} disabled={submitting}>
           Cancel
@@ -48,18 +56,23 @@ function PaygForm({ onSuccess, onCancel }) {
   );
 }
 
-// Fetches a fresh PaymentIntent for this one action, then renders Stripe's unified
-// card/Apple Pay/Google Pay element. Calls onSuccess(paymentIntentId) once paid.
-export default function PaygCheckout({ onSuccess, onCancel }) {
+// Fetches a fresh PaymentIntent to unlock a whole category for $1, renders Stripe's
+// unified card/Apple Pay/Google Pay element, then confirms the pass server-side once
+// paid. Calls onSuccess() with no arguments once the category is unlocked.
+export default function PaygCheckout({ category, onSuccess, onCancel }) {
   const { currency } = useCurrency();
   const [clientSecret, setClientSecret] = useState('');
+  const [paymentIntentId, setPaymentIntentId] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
-    apiPost('/billing/payg/charge', { currency })
-      .then((data) => setClientSecret(data.clientSecret))
+    apiPost('/billing/payg/unlock-category', { category, currency })
+      .then((data) => {
+        setClientSecret(data.clientSecret);
+        setPaymentIntentId(data.paymentIntentId);
+      })
       .catch((err) => setError(err.message));
-  }, [currency]);
+  }, [category, currency]);
 
   if (!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY) {
     return <div className="error-banner">Payments aren't configured yet — add your Stripe keys to get this live.</div>;
@@ -69,7 +82,7 @@ export default function PaygCheckout({ onSuccess, onCancel }) {
 
   return (
     <Elements stripe={stripePromise} options={{ clientSecret }}>
-      <PaygForm onSuccess={onSuccess} onCancel={onCancel} />
+      <UnlockForm category={category} paymentIntentId={paymentIntentId} onSuccess={onSuccess} onCancel={onCancel} />
     </Elements>
   );
 }

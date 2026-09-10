@@ -5,11 +5,11 @@ import { useActionGate } from '../hooks/useActionGate.js';
 import PaygCheckout from './PaygCheckout.jsx';
 import './ToolRunner.css';
 
-// Generic runner shared by most single-file-in, single-file-out tools. Each tool
-// passes its own config: endpoint, whether it accepts multiple files, and any extra
-// option fields. Batch (multiple files at once) is only allowed for Pro accounts —
-// the server enforces this too, but we check client-side for a clean error.
+// Generic runner shared by most single-file-in, single-file-out tools. `category`
+// determines which pricing bucket this tool belongs to (pdf-management,
+// document-management, speech-to-text, image-tools) for the payg unlock flow.
 export default function ToolRunner({
+  category,
   endpoint,
   multiple = false,
   accept = '.pdf',
@@ -25,7 +25,7 @@ export default function ToolRunner({
   const [error, setError] = useState('');
   const [resultName, setResultName] = useState('');
   const inputRef = useRef(null);
-  const { user, needsAuth, priceLabel, showCheckout, gate, onPaid, cancelCheckout } = useActionGate();
+  const { user, needsAuth, checkingAccess, priceLabel, showUnlock, gate, onUnlocked, cancelUnlock } = useActionGate(category);
 
   const handleFiles = (list) => {
     const arr = Array.from(list);
@@ -39,7 +39,7 @@ export default function ToolRunner({
     handleFiles(e.dataTransfer.files);
   };
 
-  const doRun = async (paymentIntentId) => {
+  const doRun = async () => {
     setLoading(true);
     setError('');
     setResultName('');
@@ -55,7 +55,6 @@ export default function ToolRunner({
       extraFields.forEach((f) => {
         if (f.getValue) formData.set(f.name, f.getValue());
       });
-      if (paymentIntentId) formData.append('paymentIntentId', paymentIntentId);
 
       const { blob, filename } = await apiUploadForFile(endpoint, formData);
       const url = URL.createObjectURL(blob);
@@ -153,8 +152,10 @@ export default function ToolRunner({
           <Link to="/signup" className="btn btn-flash" style={{ marginRight: 10 }}>Sign up</Link>
           <Link to="/login" className="btn btn-outline">Log in</Link> to use this tool.
         </p>
-      ) : showCheckout ? (
-        <PaygCheckout onSuccess={onPaid} onCancel={cancelCheckout} />
+      ) : checkingAccess ? (
+        <p className="tool-help">Checking access…</p>
+      ) : showUnlock ? (
+        <PaygCheckout category={category} onSuccess={onUnlocked} onCancel={cancelUnlock} />
       ) : (
         <>
           <p className="price-line">{priceLabel}</p>

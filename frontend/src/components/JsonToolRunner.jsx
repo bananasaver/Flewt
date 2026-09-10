@@ -5,18 +5,16 @@ import { useActionGate } from '../hooks/useActionGate.js';
 import PaygCheckout from './PaygCheckout.jsx';
 import './ToolRunner.css';
 
-// Same shape as ToolRunner, but calls apiUploadForJson and hands the parsed JSON to
-// `renderResult` instead of triggering a file download.
-export default function JsonToolRunner({ endpoint, accept, extraFields = [], renderResult, helpText }) {
+export default function JsonToolRunner({ category, endpoint, accept, extraFields = [], renderResult, helpText }) {
   const [file, setFile] = useState(null);
   const [options, setOptions] = useState(() => Object.fromEntries(extraFields.map((f) => [f.name, f.default || ''])));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
   const inputRef = useRef(null);
-  const { needsAuth, priceLabel, showCheckout, gate, onPaid, cancelCheckout } = useActionGate();
+  const { needsAuth, checkingAccess, priceLabel, showUnlock, gate, onUnlocked, cancelUnlock } = useActionGate(category);
 
-  const doRun = async (paymentIntentId) => {
+  const doRun = async () => {
     setLoading(true);
     setError('');
     setResult(null);
@@ -24,7 +22,6 @@ export default function JsonToolRunner({ endpoint, accept, extraFields = [], ren
       const formData = new FormData();
       formData.append('file', file);
       Object.entries(options).forEach(([k, v]) => formData.append(k, v));
-      if (paymentIntentId) formData.append('paymentIntentId', paymentIntentId);
       const data = await apiUploadForJson(endpoint, formData);
       setResult(data);
     } catch (err) {
@@ -73,8 +70,10 @@ export default function JsonToolRunner({ endpoint, accept, extraFields = [], ren
           <Link to="/signup" className="btn btn-flash" style={{ marginRight: 10 }}>Sign up</Link>
           <Link to="/login" className="btn btn-outline">Log in</Link> to use this tool.
         </p>
-      ) : showCheckout ? (
-        <PaygCheckout onSuccess={onPaid} onCancel={cancelCheckout} />
+      ) : checkingAccess ? (
+        <p className="tool-help">Checking access…</p>
+      ) : showUnlock ? (
+        <PaygCheckout category={category} onSuccess={onUnlocked} onCancel={cancelUnlock} />
       ) : (
         <>
           <p className="price-line">{priceLabel}</p>
