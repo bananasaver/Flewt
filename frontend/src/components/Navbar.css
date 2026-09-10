@@ -10,26 +10,27 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 68px;
+  height: 76px;
 }
 .nav-logo {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: 22px;
+  font-size: 24px;
   color: var(--white);
 }
 .nav-logo-dash { color: var(--flash); }
-.nav-links { display: flex; gap: 28px; }
+.nav-links { display: flex; gap: 32px; }
 .nav-links, .nav-actions { align-items: center; }
-.nav-actions { display: flex; gap: 16px; }
+.nav-actions { display: flex; gap: 18px; align-items: center; }
 .nav-link {
-  font-size: 14px;
-  font-weight: 500;
-  color: rgba(255,255,255,0.75);
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.8);
   transition: color 0.15s ease;
+  padding: 8px 2px;
 }
 .nav-link:hover { color: var(--white); }
-.nav-btn { padding: 9px 18px; font-size: 14px; }
+.nav-btn { padding: 10px 22px; font-size: 14px; border-radius: 10px; }
 @media (max-width: 720px) {
   .nav-links { display: none; }
 }
