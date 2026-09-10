@@ -202,3 +202,134 @@ export async function comparePdfText(bufferA, bufferB) {
 
   return { removed, added, unchangedCount: linesA.filter((l) => setB.has(l)).length };
 }
+
+// Builds a single PDF from one or more photos (e.g. a phone-photographed document),
+// one image per page, each fitted to a standard A4-ish page.
+export async function imagesToPdf(buffers) {
+  const doc = await PDFDocument.create();
+  const pageWidth = 595;
+  const pageHeight = 842;
+  const margin = 24;
+
+  for (const buf of buffers) {
+    let img;
+    try {
+      img = await doc.embedJpg(buf);
+    } catch {
+      img = await doc.embedPng(buf);
+    }
+    const page = doc.addPage([pageWidth, pageHeight]);
+    const maxW = pageWidth - margin * 2;
+    const maxH = pageHeight - margin * 2;
+    const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+    const w = img.width * scale;
+    const h = img.height * scale;
+    page.drawImage(img, { x: (pageWidth - w) / 2, y: (pageHeight - h) / 2, width: w, height: h });
+  }
+
+  return doc.save();
+}
+
+// Stamps a bold corner label (APPROVED / PAID / DRAFT / a custom word) plus today's
+// date onto a page — a quick, informal alternative to a full digital signature.
+export async function stampLabel(buffer, { label, page: pageNum }) {
+  const src = await PDFDocument.load(buffer);
+  const pages = src.getPages();
+  const idx = Math.min(Math.max((pageNum || 1) - 1, 0), pages.length - 1);
+  const page = pages[idx];
+  const font = await src.embedFont(StandardFonts.HelveticaBold);
+  const dateFont = await src.embedFont(StandardFonts.Helvetica);
+  const { width, height } = page.getSize();
+  const text = (label || 'APPROVED').toUpperCase().slice(0, 24);
+  const size = 22;
+  const textWidth = font.widthOfTextAtSize(text, size);
+  const boxX = width - textWidth - 60;
+  const boxY = height - 70;
+
+  page.drawRectangle({
+    x: boxX - 12,
+    y: boxY - 8,
+    width: textWidth + 24,
+    height: size + 16,
+    borderColor: rgb(0.75, 0.1, 0.1),
+    borderWidth: 2,
+  });
+  page.drawText(text, { x: boxX, y: boxY, size, font, color: rgb(0.75, 0.1, 0.1) });
+
+  const dateText = new Date().toLocaleDateString('en-GB');
+  page.drawText(dateText, {
+    x: boxX,
+    y: boxY - 16,
+    size: 9,
+    font: dateFont,
+    color: rgb(0.75, 0.1, 0.1),
+  });
+
+  return src.save();
+}
+
+// Builds a simple, clean invoice PDF from structured data:
+// { from, to, invoiceNumber, date, items: [{ description, qty, price }], notes }
+export async function buildInvoicePdf(data = {}) {
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([595, 842]);
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const margin = 50;
+  let y = 792;
+
+  page.drawText('INVOICE', { x: margin, y, size: 26, font: bold, color: rgb(0.1, 0.13, 0.19) });
+  y -= 20;
+  page.drawText(`# ${data.invoiceNumber || '—'}`, { x: margin, y, size: 11, font, color: rgb(0.3, 0.3, 0.35) });
+  page.drawText(data.date || new Date().toLocaleDateString('en-GB'), { x: 480, y, size: 11, font, color: rgb(0.3, 0.3, 0.35) });
+  y -= 40;
+
+  page.drawText('From', { x: margin, y, size: 10, font: bold, color: rgb(0.4, 0.4, 0.45) });
+  page.drawText('To', { x: 320, y, size: 10, font: bold, color: rgb(0.4, 0.4, 0.45) });
+  y -= 16;
+  (data.from || '').split('\n').forEach((line) => {
+    page.drawText(line, { x: margin, y, size: 11, font, color: rgb(0.1, 0.1, 0.15) });
+    y -= 14;
+  });
+  let yTo = y + ((data.from || '').split('\n').length * 14);
+  (data.to || '').split('\n').forEach((line) => {
+    page.drawText(line, { x: 320, y: yTo, size: 11, font, color: rgb(0.1, 0.1, 0.15) });
+    yTo -= 14;
+  });
+  y = Math.min(y, yTo) - 30;
+
+  // Table header
+  page.drawRectangle({ x: margin, y: y - 6, width: 495, height: 22, color: rgb(0.93, 0.94, 0.96) });
+  page.drawText('Description', { x: margin + 8, y, size: 10, font: bold, color: rgb(0.2, 0.2, 0.25) });
+  page.drawText('Qty', { x: 400, y, size: 10, font: bold, color: rgb(0.2, 0.2, 0.25) });
+  page.drawText('Price', { x: 440, y, size: 10, font: bold, color: rgb(0.2, 0.2, 0.25) });
+  page.drawText('Total', { x: 495, y, size: 10, font: bold, color: rgb(0.2, 0.2, 0.25) });
+  y -= 26;
+
+  let total = 0;
+  for (const item of data.items || []) {
+    const qty = Number(item.qty) || 0;
+    const price = Number(item.price) || 0;
+    const lineTotal = qty * price;
+    total += lineTotal;
+    page.drawText(String(item.description || '').slice(0, 48), { x: margin + 8, y, size: 10, font, color: rgb(0.15, 0.15, 0.2) });
+    page.drawText(String(qty), { x: 400, y, size: 10, font, color: rgb(0.15, 0.15, 0.2) });
+    page.drawText(price.toFixed(2), { x: 440, y, size: 10, font, color: rgb(0.15, 0.15, 0.2) });
+    page.drawText(lineTotal.toFixed(2), { x: 495, y, size: 10, font, color: rgb(0.15, 0.15, 0.2) });
+    y -= 18;
+  }
+
+  y -= 12;
+  page.drawLine({ start: { x: margin, y: y + 10 }, end: { x: 545, y: y + 10 }, thickness: 1, color: rgb(0.85, 0.86, 0.88) });
+  page.drawText('Total', { x: 440, y, size: 12, font: bold, color: rgb(0.1, 0.13, 0.19) });
+  page.drawText(total.toFixed(2), { x: 495, y, size: 12, font: bold, color: rgb(0.1, 0.13, 0.19) });
+
+  if (data.notes) {
+    y -= 40;
+    page.drawText('Notes', { x: margin, y, size: 10, font: bold, color: rgb(0.4, 0.4, 0.45) });
+    y -= 14;
+    page.drawText(String(data.notes).slice(0, 300), { x: margin, y, size: 10, font, color: rgb(0.2, 0.2, 0.25) });
+  }
+
+  return doc.save();
+}

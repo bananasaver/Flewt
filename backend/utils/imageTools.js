@@ -28,3 +28,20 @@ export async function cropAndCleanImage(buffer, { left, top, width, height } = {
   }
   return pipeline.normalize().modulate({ brightness: 1.05 }).jpeg({ quality: 90 }).toBuffer();
 }
+
+// Recognizes text (printed or reasonably neat handwriting) in a photographed image
+// using Tesseract.js — runs entirely on your own server, no external API key needed.
+// Lightly sharpens/normalizes the image first, since OCR accuracy is very sensitive
+// to contrast and focus.
+export async function ocrImage(buffer) {
+  const { createWorker } = await import('tesseract.js');
+  const prepped = await sharp(buffer).normalize().sharpen().toBuffer();
+
+  const worker = await createWorker('eng');
+  try {
+    const { data } = await worker.recognize(prepped);
+    return data.text || '';
+  } finally {
+    await worker.terminate();
+  }
+}
