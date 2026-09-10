@@ -50,6 +50,30 @@ export default function CategoryPage() {
         </div>
       )}
 
+      <div className="guide-strip">
+        <div className="guide-step">
+          <span className="guide-step-n">1</span>
+          <div>
+            <h4>Browse what's below</h4>
+            <p>Every tool in {category.name} is listed with what it actually does — no guessing from an icon.</p>
+          </div>
+        </div>
+        <div className="guide-step">
+          <span className="guide-step-n">2</span>
+          <div>
+            <h4>New here? Start with "{category.tools[0]?.name}"</h4>
+            <p>{category.tools[0]?.desc}</p>
+          </div>
+        </div>
+        <div className="guide-step">
+          <span className="guide-step-n">3</span>
+          <div>
+            <h4>See the price before it runs</h4>
+            <p>Nothing happens — or gets charged — until you've confirmed it.</p>
+          </div>
+        </div>
+      </div>
+
       <div className="tools-grid">
         {category.tools.map((t) => (
           <Link to={t.to} key={t.to} className="tool-card">

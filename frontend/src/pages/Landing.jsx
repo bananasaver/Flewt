@@ -14,17 +14,20 @@ export default function Landing() {
     <div>
       <section className="hero">
         <div className="hero-streak" aria-hidden="true" />
-        <div className="wrap hero-inner">
-          <h1 className="hero-headline">Fly through your workflow.</h1>
-          <p className="hero-sub">
-            Flewt is a fast, no-clutter set of tools for the everyday tasks that slow
-            people down — document and PDF management, speech to text, and more — at a
-            fraction of what the big names charge. $1 unlocks a whole toolkit, or pick a plan.
-          </p>
-          <div className="hero-actions">
-            <Link to="/tools" className="btn btn-flash">Browse tools</Link>
-            <Link to="/pricing" className="btn btn-ghost-paper">See pricing</Link>
+        <div className="wrap hero-grid">
+          <div className="hero-inner">
+            <h1 className="hero-headline">Fly through your workflow.</h1>
+            <p className="hero-sub">
+              Flewt is a fast, no-clutter set of tools for the everyday tasks that slow
+              people down — document and PDF management, speech to text, and more — at a
+              fraction of what the big names charge. $1 unlocks a whole toolkit, or pick a plan.
+            </p>
+            <div className="hero-actions">
+              <Link to="/tools" className="btn btn-flash">Browse tools</Link>
+              <Link to="/pricing" className="btn btn-ghost-paper">See pricing</Link>
+            </div>
           </div>
+          <div className="hero-photo" role="img" aria-label="Someone using their phone to manage paperwork on the go" />
         </div>
       </section>
 
@@ -49,12 +52,14 @@ export default function Landing() {
           <div className="section-head">
             <h2>How it works</h2>
           </div>
-          <div className="steps">
+          <div className="guide-strip">
             {STEPS.map((s) => (
-              <div className="step" key={s.n}>
-                <span className="step-n">{s.n}</span>
-                <h3>{s.title}</h3>
-                <p>{s.desc}</p>
+              <div className="guide-step" key={s.n}>
+                <span className="guide-step-n">{s.n}</span>
+                <div>
+                  <h4>{s.title}</h4>
+                  <p>{s.desc}</p>
+                </div>
               </div>
             ))}
           </div>
