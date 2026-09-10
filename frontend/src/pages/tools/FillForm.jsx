@@ -12,7 +12,7 @@ export default function FillForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
-  const { needsAuth, priceLabel, showCheckout, gate, onPaid, cancelCheckout } = useActionGate();
+  const { needsAuth, checkingAccess, priceLabel, showUnlock, gate, onUnlocked, cancelUnlock } = useActionGate('document-management');
 
   const detectFields = async () => {
     if (!file) return setError('Choose a PDF form first.');
@@ -21,7 +21,7 @@ export default function FillForm() {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const data = await apiUploadForJson('/pdf/extract-form-data', formData);
+      const data = await apiUploadForJson('/pdf/detect-form-fields', formData);
       if (data.fields.length === 0) {
         setError("This PDF doesn't seem to have fillable form fields.");
       } else {
@@ -34,14 +34,13 @@ export default function FillForm() {
     }
   };
 
-  const doFill = async (paymentIntentId) => {
+  const doFill = async () => {
     setLoading(true);
     setError('');
     try {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('values', JSON.stringify(values));
-      if (paymentIntentId) formData.append('paymentIntentId', paymentIntentId);
       const { blob, filename } = await apiUploadForFile('/pdf/fill-form', formData);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -102,8 +101,10 @@ export default function FillForm() {
                 <Link to="/signup" className="btn btn-flash" style={{ marginRight: 10 }}>Sign up</Link>
                 <Link to="/login" className="btn btn-outline">Log in</Link> to use this tool.
               </p>
-            ) : showCheckout ? (
-              <PaygCheckout onSuccess={onPaid} onCancel={cancelCheckout} />
+            ) : checkingAccess ? (
+              <p className="tool-help">Checking access…</p>
+            ) : showUnlock ? (
+              <PaygCheckout category="document-management" onSuccess={onUnlocked} onCancel={cancelUnlock} />
             ) : (
               <>
                 <p className="price-line">{priceLabel}</p>

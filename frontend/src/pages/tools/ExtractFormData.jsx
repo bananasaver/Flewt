@@ -9,7 +9,7 @@ export default function ExtractFormData() {
         <p>Upload a filled-in PDF form and pull out every field's name and value.</p>
       </div>
       <JsonToolRunner
-        endpoint="/pdf/extract-form-data"
+        category="pdf-management" endpoint="/pdf/extract-form-data"
         accept=".pdf"
         renderResult={(data) => (
           <table className="result-table">

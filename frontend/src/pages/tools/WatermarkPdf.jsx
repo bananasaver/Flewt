@@ -9,7 +9,7 @@ export default function WatermarkPdf() {
         <p>Stamp a diagonal text watermark across every page.</p>
       </div>
       <ToolRunner
-        endpoint="/pdf/watermark"
+        category="pdf-management" endpoint="/pdf/watermark"
         accept=".pdf"
         extraFields={[{ name: 'text', label: 'Watermark text', type: 'text', default: 'CONFIDENTIAL', placeholder: 'e.g. DRAFT' }]}
       />

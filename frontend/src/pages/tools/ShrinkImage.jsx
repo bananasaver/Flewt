@@ -9,7 +9,7 @@ export default function ShrinkImage() {
         <p>Cut file size for uploads, forms, and email — works on JPG and PNG.</p>
       </div>
       <ToolRunner
-        endpoint="/image/shrink"
+        category="image-tools" endpoint="/image/shrink"
         accept="image/png,image/jpeg"
         extraFields={[
           { name: 'maxWidth', label: 'Max width (px)', type: 'number', default: '1600' },

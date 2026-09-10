@@ -9,7 +9,7 @@ export default function ScanCleanup() {
         <p>Crop and lightly enhance a photo of a document. Leave the crop fields blank to just enhance the whole image.</p>
       </div>
       <ToolRunner
-        endpoint="/image/scan-cleanup"
+        category="document-management" endpoint="/image/scan-cleanup"
         accept="image/png,image/jpeg"
         extraFields={[
           { name: 'left', label: 'Crop left (px, optional)', type: 'number' },

@@ -11,9 +11,9 @@ export default function ComparePdfs() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
-  const { needsAuth, priceLabel, showCheckout, gate, onPaid, cancelCheckout } = useActionGate();
+  const { needsAuth, checkingAccess, priceLabel, showUnlock, gate, onUnlocked, cancelUnlock } = useActionGate('pdf-management');
 
-  const doRun = async (paymentIntentId) => {
+  const doRun = async () => {
     setLoading(true);
     setError('');
     setResult(null);
@@ -21,7 +21,6 @@ export default function ComparePdfs() {
       const formData = new FormData();
       formData.append('fileA', fileA);
       formData.append('fileB', fileB);
-      if (paymentIntentId) formData.append('paymentIntentId', paymentIntentId);
       const data = await apiUploadForJson('/pdf/compare', formData);
       setResult(data);
     } catch (err) {
@@ -87,8 +86,10 @@ export default function ComparePdfs() {
             <Link to="/signup" className="btn btn-flash" style={{ marginRight: 10 }}>Sign up</Link>
             <Link to="/login" className="btn btn-outline">Log in</Link> to use this tool.
           </p>
-        ) : showCheckout ? (
-          <PaygCheckout onSuccess={onPaid} onCancel={cancelCheckout} />
+        ) : checkingAccess ? (
+          <p className="tool-help">Checking access…</p>
+        ) : showUnlock ? (
+          <PaygCheckout category="pdf-management" onSuccess={onUnlocked} onCancel={cancelUnlock} />
         ) : (
           <>
             <p className="price-line">{priceLabel}</p>

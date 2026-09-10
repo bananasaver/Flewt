@@ -9,7 +9,7 @@ export default function EditPdf() {
         <p>Drop a line of text onto a page — useful for quick notes, signatures, or fill-ins.</p>
       </div>
       <ToolRunner
-        endpoint="/pdf/add-text"
+        category="pdf-management" endpoint="/pdf/add-text"
         accept=".pdf"
         extraFields={[
           { name: 'text', label: 'Text to add', type: 'text', default: '', placeholder: 'Type here' },

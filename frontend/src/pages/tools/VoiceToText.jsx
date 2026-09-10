@@ -9,7 +9,7 @@ export default function VoiceToText() {
         <p>Upload a recording and get a plain-text transcript back.</p>
       </div>
       <JsonToolRunner
-        endpoint="/speech/to-text"
+        category="speech-to-text" endpoint="/speech/to-text"
         accept="audio/*"
         renderResult={(data) => (
           <div className="transcript-box">

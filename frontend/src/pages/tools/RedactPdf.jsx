@@ -41,7 +41,7 @@ export default function RedactPdf() {
       </div>
 
       <ToolRunner
-        endpoint="/pdf/redact"
+        category="pdf-management" endpoint="/pdf/redact"
         accept=".pdf"
         extraFields={[{ name: 'regions', getValue: () => JSON.stringify(regions) }]}
         helpText="Tip: open the PDF at actual size to estimate coordinates, or use a PDF viewer that shows point positions."

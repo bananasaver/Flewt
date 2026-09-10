@@ -13,7 +13,7 @@ export default function DrawSign() {
   const [done, setDone] = useState(false);
   const canvasRef = useRef(null);
   const drawing = useRef(false);
-  const { needsAuth, priceLabel, showCheckout, gate, onPaid, cancelCheckout } = useActionGate();
+  const { needsAuth, checkingAccess, priceLabel, showUnlock, gate, onUnlocked, cancelUnlock } = useActionGate('document-management');
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -50,7 +50,7 @@ export default function DrawSign() {
     canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
   };
 
-  const doSign = async (paymentIntentId) => {
+  const doSign = async () => {
     setLoading(true);
     setError('');
     try {
@@ -63,7 +63,6 @@ export default function DrawSign() {
       formData.append('page', page);
       formData.append('x', '50');
       formData.append('y', '50');
-      if (paymentIntentId) formData.append('paymentIntentId', paymentIntentId);
 
       const { blob, filename } = await apiUploadForFile('/pdf/sign', formData);
       const url = URL.createObjectURL(blob);
@@ -132,8 +131,10 @@ export default function DrawSign() {
             <Link to="/signup" className="btn btn-flash" style={{ marginRight: 10 }}>Sign up</Link>
             <Link to="/login" className="btn btn-outline">Log in</Link> to use this tool.
           </p>
-        ) : showCheckout ? (
-          <PaygCheckout onSuccess={onPaid} onCancel={cancelCheckout} />
+        ) : checkingAccess ? (
+          <p className="tool-help">Checking access…</p>
+        ) : showUnlock ? (
+          <PaygCheckout category="document-management" onSuccess={onUnlocked} onCancel={cancelUnlock} />
         ) : (
           <>
             <p className="price-line">{priceLabel}</p>

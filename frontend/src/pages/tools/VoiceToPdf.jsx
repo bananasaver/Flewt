@@ -9,7 +9,7 @@ export default function VoiceToPdf() {
         <p>Upload a recording and get a clean, formatted PDF transcript back.</p>
       </div>
       <ToolRunner
-        endpoint="/speech/to-pdf"
+        category="speech-to-text" endpoint="/speech/to-pdf"
         accept="audio/*"
         extraFields={[{ name: 'title', label: 'Document title', type: 'text', default: 'Voice Memo' }]}
         helpText="Needs OPENAI_API_KEY set on the server — see the README if this returns a 'not configured' error."

@@ -9,7 +9,7 @@ export default function RotatePdf() {
         <p>Rotate every page in a PDF by 90, 180, or 270 degrees.</p>
       </div>
       <ToolRunner
-        endpoint="/pdf/rotate"
+        category="pdf-management" endpoint="/pdf/rotate"
         accept=".pdf"
         extraFields={[
           {

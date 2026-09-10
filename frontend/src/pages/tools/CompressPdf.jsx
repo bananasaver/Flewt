@@ -8,7 +8,7 @@ export default function CompressPdf() {
         <h1>Compress a PDF</h1>
         <p>Shrink a PDF's file size for easier sharing and uploading.</p>
       </div>
-      <ToolRunner endpoint="/pdf/compress" accept=".pdf" />
+      <ToolRunner category="pdf-management" endpoint="/pdf/compress" accept=".pdf" />
     </div>
   );
 }

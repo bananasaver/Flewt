@@ -8,7 +8,7 @@ export default function SplitPdf() {
         <h1>Split a PDF</h1>
         <p>Break a PDF into individual pages, delivered as a zip file.</p>
       </div>
-      <ToolRunner endpoint="/pdf/split" accept=".pdf" helpText="You'll get a .zip with one PDF per page." />
+      <ToolRunner category="pdf-management" endpoint="/pdf/split" accept=".pdf" helpText="You'll get a .zip with one PDF per page." />
     </div>
   );
 }
