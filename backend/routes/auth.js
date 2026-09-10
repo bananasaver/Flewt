@@ -80,4 +80,31 @@ router.get('/me', requireAuth, (req, res) => {
   res.json({ user: publicUser(user) });
 });
 
+// ---- Testing bypass — NOT for production use ----
+// Lets you flip your own logged-in account between payg/mid/pro instantly, without
+// touching Stripe, so you can test tool functionality and usability first. Protected
+// two ways: you must already be logged in as the account being changed, AND you must
+// send the secret set in ADMIN_TEST_SECRET (backend/.env) — nobody can use this
+// without both. Leave ADMIN_TEST_SECRET unset (or remove this route) once you're
+// closer to a real launch and don't need it anymore.
+router.post('/dev-set-plan', requireAuth, (req, res) => {
+  if (!process.env.ADMIN_TEST_SECRET) {
+    return res.status(403).json({ error: 'Testing bypass is disabled (ADMIN_TEST_SECRET not set).' });
+  }
+  if (req.headers['x-admin-secret'] !== process.env.ADMIN_TEST_SECRET) {
+    return res.status(403).json({ error: 'Invalid testing secret.' });
+  }
+  const { plan } = req.body;
+  if (!['payg', 'mid', 'pro'].includes(plan)) {
+    return res.status(400).json({ error: 'plan must be payg, mid, or pro.' });
+  }
+
+  db.prepare('UPDATE users SET plan = ?, monthly_actions_used = 0, monthly_reset_at = ? WHERE id = ?')
+    .run(plan, new Date().toISOString(), req.user.id);
+
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+  const token = signToken(user); // re-sign so the JWT's embedded plan is current too
+  res.json({ token, user: publicUser(user) });
+});
+
 export default router;

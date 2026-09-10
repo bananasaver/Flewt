@@ -2,28 +2,24 @@ import { Router } from 'express';
 import multer from 'multer';
 import { requireAuth } from '../middleware/auth.js';
 import { checkUsage, recordUsage } from '../middleware/usage.js';
-import { verifyPaygPayment } from './billing.js';
-import { shrinkImage, cropAndCleanImage } from '../utils/imageTools.js';
+import { shrinkImage, cropAndCleanImage, ocrImage } from '../utils/imageTools.js';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } });
 
-router.use(requireAuth, checkUsage);
+router.use(requireAuth);
 
-async function gatePayment(req, res, next) {
-  if (!req.billing.requiresPayment) return next();
-  const ok = await verifyPaygPayment(req.body.paymentIntentId, req.user.id);
-  if (!ok) return res.status(402).json({ error: 'Payment not confirmed for this action yet.', code: 'PAYMENT_REQUIRED' });
-  next();
+function finish(req) {
+  recordUsage(req.user.id, req.billing.plan);
 }
 
-router.post('/shrink', upload.single('file'), gatePayment, async (req, res) => {
+router.post('/shrink', checkUsage('image-tools'), upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Upload an image to shrink.' });
     const maxWidth = req.body.maxWidth ? parseInt(req.body.maxWidth, 10) : undefined;
     const quality = req.body.quality ? parseInt(req.body.quality, 10) : undefined;
     const out = await shrinkImage(req.file.buffer, { maxWidth, quality });
-    recordUsage(req.user.id, req.billing.plan);
+    finish(req);
     res.set('Content-Type', req.file.mimetype.includes('png') ? 'image/png' : 'image/jpeg');
     res.set('Content-Disposition', 'attachment; filename="shrunk-image"');
     res.send(out);
@@ -33,7 +29,7 @@ router.post('/shrink', upload.single('file'), gatePayment, async (req, res) => {
   }
 });
 
-router.post('/scan-cleanup', upload.single('file'), gatePayment, async (req, res) => {
+router.post('/scan-cleanup', checkUsage('document-management'), upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Upload a photo of your document.' });
     const { left, top, width, height } = req.body;
@@ -43,13 +39,25 @@ router.post('/scan-cleanup', upload.single('file'), gatePayment, async (req, res
       width: width ? parseInt(width, 10) : undefined,
       height: height ? parseInt(height, 10) : undefined,
     });
-    recordUsage(req.user.id, req.billing.plan);
+    finish(req);
     res.set('Content-Type', 'image/jpeg');
     res.set('Content-Disposition', 'attachment; filename="cleaned-scan.jpg"');
     res.send(out);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Couldn't clean up that image. Make sure it's a valid image file." });
+  }
+});
+
+router.post('/ocr', checkUsage('document-management'), upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Upload a photo of the text or handwriting.' });
+    const text = await ocrImage(req.file.buffer);
+    finish(req);
+    res.json({ text });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Couldn't read that image. Try a clearer, well-lit photo." });
   }
 });
 

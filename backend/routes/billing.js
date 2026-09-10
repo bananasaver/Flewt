@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import Stripe from 'stripe';
-import db from '../db.js';
+import { randomUUID } from 'crypto';
+import db, { PASS_DURATION_MS } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
@@ -13,8 +14,8 @@ const SUBSCRIPTION_PRICE_IDS = {
   pro: { USD: process.env.STRIPE_PRICE_PRO_USD, GBP: process.env.STRIPE_PRICE_PRO_GBP, EUR: process.env.STRIPE_PRICE_PRO_EUR },
 };
 
-// PAYG is a flat 1 unit of whichever currency, charged per action — no Stripe Price
-// object needed, since the amount never changes.
+// PAYG is a flat 1 unit of whichever currency to unlock a whole category — no Stripe
+// Price object needed, since the amount never changes.
 const PAYG_AMOUNT = { USD: 100, GBP: 100, EUR: 100 }; // cents/pence, i.e. $1 / £1 / €1
 
 function currencyOrDefault(currency) {
@@ -80,20 +81,26 @@ router.post('/create-portal-session', requireAuth, async (req, res) => {
   }
 });
 
-// ---- PAYG: one action, one charge ----
-// Called right before a tool runs when the user is on the payg plan. Returns a
-// PaymentIntent client secret — the frontend confirms it (card, Apple Pay, or Google
-// Pay, via the same Payment Request Button used for quick pay), then sends the
-// resulting paymentIntentId along with the tool request so the server can verify
-// payment actually succeeded before doing the work.
-router.post('/payg/charge', requireAuth, async (req, res) => {
+// ---- PAYG: $1 unlocks a whole category ----
+// Step 1: frontend calls this to get a PaymentIntent for $1/£1/€1, and confirms it
+// with Stripe.js (card, Apple Pay, or Google Pay all handled by the same Payment
+// Element). Step 2: frontend calls /payg/confirm-category-pass with the resulting
+// paymentIntentId, which verifies the payment really succeeded and only then creates
+// the pass row that unlocks every tool in that category for PASS_DURATION_MS.
+const VALID_CATEGORIES = ['pdf-management', 'document-management', 'speech-to-text', 'image-tools'];
+
+router.post('/payg/unlock-category', requireAuth, async (req, res) => {
   try {
-    const cur = currencyOrDefault(req.body.currency);
+    const { category, currency } = req.body;
+    if (!VALID_CATEGORIES.includes(category)) {
+      return res.status(400).json({ error: 'Unknown category.' });
+    }
+    const cur = currencyOrDefault(currency);
     const paymentIntent = await stripe.paymentIntents.create({
       amount: PAYG_AMOUNT[cur],
       currency: cur.toLowerCase(),
       automatic_payment_methods: { enabled: true },
-      metadata: { userId: req.user.id, kind: 'payg_action' },
+      metadata: { userId: req.user.id, kind: 'category_pass', category },
     });
     res.json({ clientSecret: paymentIntent.client_secret, paymentIntentId: paymentIntent.id });
   } catch (err) {
@@ -102,13 +109,43 @@ router.post('/payg/charge', requireAuth, async (req, res) => {
   }
 });
 
-// Verifies a PaymentIntent actually succeeded and belongs to this user, before a tool
-// route does the real work. Exported so pdf.js/image.js/speech.js routes can call it directly.
-export async function verifyPaygPayment(paymentIntentId, userId) {
-  if (!paymentIntentId) return false;
-  const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
-  return intent.status === 'succeeded' && intent.metadata.userId === userId && intent.metadata.kind === 'payg_action';
-}
+router.post('/payg/confirm-category-pass', requireAuth, async (req, res) => {
+  try {
+    const { paymentIntentId, category } = req.body;
+    if (!VALID_CATEGORIES.includes(category)) {
+      return res.status(400).json({ error: 'Unknown category.' });
+    }
+    const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    const valid =
+      intent.status === 'succeeded' &&
+      intent.metadata.userId === req.user.id &&
+      intent.metadata.kind === 'category_pass' &&
+      intent.metadata.category === category;
+
+    if (!valid) {
+      return res.status(402).json({ error: 'Payment could not be verified.' });
+    }
+
+    const expiresAt = new Date(Date.now() + PASS_DURATION_MS).toISOString();
+    db.prepare(
+      'INSERT INTO document_passes (id, user_id, category, stripe_payment_intent_id, expires_at) VALUES (?, ?, ?, ?, ?)'
+    ).run(randomUUID(), req.user.id, category, paymentIntentId, expiresAt);
+
+    res.json({ category, expiresAt });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Couldn't confirm your unlock. Please try again." });
+  }
+});
+
+// Returns this user's currently-active passes, so the frontend can show "unlocked
+// until 3:45pm" instead of re-prompting for payment on every page load.
+router.get('/passes', requireAuth, (req, res) => {
+  const passes = db
+    .prepare('SELECT category, expires_at FROM document_passes WHERE user_id = ? AND expires_at > ?')
+    .all(req.user.id, new Date().toISOString());
+  res.json({ passes });
+});
 
 // ---- Quick pay button (Apple Pay / Google Pay / card) for subscription upgrades ----
 // Kept generic so the same Payment Request Button component can be reused for a

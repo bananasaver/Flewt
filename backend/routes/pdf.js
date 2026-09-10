@@ -3,7 +3,6 @@ import multer from 'multer';
 import archiver from 'archiver';
 import { requireAuth } from '../middleware/auth.js';
 import { checkUsage, recordUsage } from '../middleware/usage.js';
-import { verifyPaygPayment } from './billing.js';
 import {
   mergePdfs,
   splitPdf,
@@ -17,32 +16,24 @@ import {
   fillPdfForm,
   stampSignature,
   comparePdfText,
+  imagesToPdf,
+  stampLabel,
+  buildInvoicePdf,
 } from '../utils/pdfTools.js';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 
-// Every tool route requires an account (actions are billed one way or another) and
-// runs through checkUsage, which attaches req.billing = { plan, requiresPayment, batchAllowed }.
-router.use(requireAuth, checkUsage);
-
-// For payg users, confirms the paymentIntentId sent with the request actually
-// succeeded and belongs to them, before letting the route handler do real work.
-// For mid/pro, this is a no-op (already covered by checkUsage).
-async function gatePayment(req, res, next) {
-  if (!req.billing.requiresPayment) return next();
-  const ok = await verifyPaygPayment(req.body.paymentIntentId, req.user.id);
-  if (!ok) {
-    return res.status(402).json({ error: 'Payment not confirmed for this action yet.', code: 'PAYMENT_REQUIRED' });
-  }
-  next();
-}
+router.use(requireAuth);
 
 function finish(req) {
   recordUsage(req.user.id, req.billing.plan);
 }
 
-router.post('/merge', upload.array('files', 20), gatePayment, async (req, res) => {
+// ---- PDF Management ----
+const pdfMgmt = checkUsage('pdf-management');
+
+router.post('/merge', pdfMgmt, upload.array('files', 20), async (req, res) => {
   try {
     if (!req.files || req.files.length < 2) {
       return res.status(400).json({ error: 'Upload at least two PDFs to merge.' });
@@ -61,7 +52,7 @@ router.post('/merge', upload.array('files', 20), gatePayment, async (req, res) =
   }
 });
 
-router.post('/split', upload.single('file'), gatePayment, async (req, res) => {
+router.post('/split', pdfMgmt, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Upload a PDF to split.' });
     const parts = await splitPdf(req.file.buffer);
@@ -78,7 +69,7 @@ router.post('/split', upload.single('file'), gatePayment, async (req, res) => {
   }
 });
 
-router.post('/rotate', upload.single('file'), gatePayment, async (req, res) => {
+router.post('/rotate', pdfMgmt, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Upload a PDF to rotate.' });
     const angle = parseInt(req.body.angle, 10) || 90;
@@ -93,7 +84,7 @@ router.post('/rotate', upload.single('file'), gatePayment, async (req, res) => {
   }
 });
 
-router.post('/watermark', upload.single('file'), gatePayment, async (req, res) => {
+router.post('/watermark', pdfMgmt, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Upload a PDF to watermark.' });
     const text = (req.body.text || 'FLEWT').slice(0, 40);
@@ -108,7 +99,7 @@ router.post('/watermark', upload.single('file'), gatePayment, async (req, res) =
   }
 });
 
-router.post('/compress', upload.single('file'), gatePayment, async (req, res) => {
+router.post('/compress', pdfMgmt, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Upload a PDF to compress.' });
     const bytes = await compressPdf(req.file.buffer);
@@ -122,7 +113,7 @@ router.post('/compress', upload.single('file'), gatePayment, async (req, res) =>
   }
 });
 
-router.post('/to-word', upload.single('file'), gatePayment, async (req, res) => {
+router.post('/to-word', pdfMgmt, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Upload a PDF to convert.' });
     const buffer = await pdfToDocx(req.file.buffer);
@@ -136,7 +127,7 @@ router.post('/to-word', upload.single('file'), gatePayment, async (req, res) => 
   }
 });
 
-router.post('/add-text', upload.single('file'), gatePayment, async (req, res) => {
+router.post('/add-text', pdfMgmt, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Upload a PDF to edit.' });
     const { text, page, x, y, size } = req.body;
@@ -159,7 +150,7 @@ router.post('/add-text', upload.single('file'), gatePayment, async (req, res) =>
   }
 });
 
-router.post('/redact', upload.single('file'), gatePayment, async (req, res) => {
+router.post('/redact', pdfMgmt, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Upload a PDF to redact.' });
     const regions = JSON.parse(req.body.regions || '[]');
@@ -175,7 +166,7 @@ router.post('/redact', upload.single('file'), gatePayment, async (req, res) => {
   }
 });
 
-router.post('/extract-form-data', upload.single('file'), gatePayment, async (req, res) => {
+router.post('/extract-form-data', pdfMgmt, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Upload a filled-in PDF form.' });
     const fields = await extractFormFields(req.file.buffer);
@@ -187,7 +178,53 @@ router.post('/extract-form-data', upload.single('file'), gatePayment, async (req
   }
 });
 
-router.post('/fill-form', upload.single('file'), gatePayment, async (req, res) => {
+router.post('/compare', pdfMgmt, upload.fields([{ name: 'fileA', maxCount: 1 }, { name: 'fileB', maxCount: 1 }]), async (req, res) => {
+  try {
+    const fileA = req.files?.fileA?.[0];
+    const fileB = req.files?.fileB?.[0];
+    if (!fileA || !fileB) return res.status(400).json({ error: 'Upload both PDFs to compare.' });
+    const diff = await comparePdfText(fileA.buffer, fileB.buffer);
+    finish(req);
+    res.json(diff);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Couldn't compare those files. Make sure both are valid PDFs." });
+  }
+});
+
+// Not yet available in this environment — see README.
+router.post('/password-protect', pdfMgmt, upload.single('file'), async (req, res) => {
+  res.status(501).json({
+    error:
+      'Password protect/unlock needs a PDF encryption library (e.g. qpdf) that isn\u2019t installed in this environment yet. See README > "Enabling password protection".',
+  });
+});
+
+router.post('/office-to-pdf', pdfMgmt, upload.single('file'), async (req, res) => {
+  res.status(501).json({
+    error:
+      'Office-to-PDF conversion needs a document engine (e.g. LibreOffice headless, or a paid conversion API) that isn\u2019t installed in this environment yet. See README > "Enabling Office-to-PDF".',
+  });
+});
+
+// ---- Document Management ----
+const docMgmt = checkUsage('document-management');
+
+// Free preview step for Fill a Form — lets someone see what fields a form has before
+// deciding to unlock/pay, without billing them for just looking. The paid action is
+// the actual /fill-form submission below.
+router.post('/detect-form-fields', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Upload a PDF form.' });
+    const fields = await extractFormFields(req.file.buffer);
+    res.json({ fields });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Couldn't read form fields from that file. It may not contain a fillable form." });
+  }
+});
+
+router.post('/fill-form', docMgmt, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Upload a PDF form to fill.' });
     const values = JSON.parse(req.body.values || '{}');
@@ -202,7 +239,7 @@ router.post('/fill-form', upload.single('file'), gatePayment, async (req, res) =
   }
 });
 
-router.post('/sign', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'signature', maxCount: 1 }]), gatePayment, async (req, res) => {
+router.post('/sign', docMgmt, upload.fields([{ name: 'file', maxCount: 1 }, { name: 'signature', maxCount: 1 }]), async (req, res) => {
   try {
     const file = req.files?.file?.[0];
     const signature = req.files?.signature?.[0];
@@ -226,36 +263,46 @@ router.post('/sign', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'sign
   }
 });
 
-router.post('/compare', upload.fields([{ name: 'fileA', maxCount: 1 }, { name: 'fileB', maxCount: 1 }]), gatePayment, async (req, res) => {
+router.post('/photos-to-pdf', docMgmt, upload.array('files', 30), async (req, res) => {
   try {
-    const fileA = req.files?.fileA?.[0];
-    const fileB = req.files?.fileB?.[0];
-    if (!fileA || !fileB) return res.status(400).json({ error: 'Upload both PDFs to compare.' });
-    const diff = await comparePdfText(fileA.buffer, fileB.buffer);
+    if (!req.files || req.files.length === 0) return res.status(400).json({ error: 'Add at least one photo.' });
+    const bytes = await imagesToPdf(req.files.map((f) => f.buffer));
     finish(req);
-    res.json(diff);
+    res.set('Content-Type', 'application/pdf');
+    res.set('Content-Disposition', 'attachment; filename="scanned.pdf"');
+    res.send(Buffer.from(bytes));
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Couldn't compare those files. Make sure both are valid PDFs." });
+    res.status(500).json({ error: "Couldn't build a PDF from those photos. Make sure they're valid images." });
   }
 });
 
-// ---- Not yet available in this environment ----
-// Both of these need a dependency this project doesn't include yet, so they're wired
-// up end-to-end (frontend page, price, route) but honestly report their limitation
-// instead of pretending to work. See README for how to enable each.
-router.post('/password-protect', upload.single('file'), gatePayment, async (req, res) => {
-  res.status(501).json({
-    error:
-      'Password protect/unlock needs a PDF encryption library (e.g. qpdf) that isn\u2019t installed in this environment yet. See README > "Enabling password protection".',
-  });
+router.post('/stamp', docMgmt, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Upload a PDF to stamp.' });
+    const { label, page } = req.body;
+    const bytes = await stampLabel(req.file.buffer, { label: label || 'APPROVED', page: parseInt(page, 10) || 1 });
+    finish(req);
+    res.set('Content-Type', 'application/pdf');
+    res.set('Content-Disposition', 'attachment; filename="stamped.pdf"');
+    res.send(Buffer.from(bytes));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Couldn't stamp that file. Make sure it's a valid PDF." });
+  }
 });
 
-router.post('/office-to-pdf', upload.single('file'), gatePayment, async (req, res) => {
-  res.status(501).json({
-    error:
-      'Office-to-PDF conversion needs a document engine (e.g. LibreOffice headless, or a paid conversion API) that isn\u2019t installed in this environment yet. See README > "Enabling Office-to-PDF".',
-  });
+router.post('/invoice', docMgmt, async (req, res) => {
+  try {
+    const bytes = await buildInvoicePdf(req.body);
+    finish(req);
+    res.set('Content-Type', 'application/pdf');
+    res.set('Content-Disposition', 'attachment; filename="invoice.pdf"');
+    res.send(Buffer.from(bytes));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Couldn't build that invoice. Check the details and try again." });
+  }
 });
 
 export default router;
