@@ -1,19 +1,30 @@
 .hero {
-  background: var(--ink);
+  background: linear-gradient(160deg, #1b2130 0%, #232c42 55%, #1b2130 100%);
   color: var(--white);
   position: relative;
   overflow: hidden;
-  padding: 96px 0 88px;
+  padding: 104px 0 96px;
 }
 .hero-streak {
   position: absolute;
-  top: -20%;
+  top: -25%;
   right: -10%;
   width: 55%;
-  height: 160%;
-  background: var(--flash);
+  height: 170%;
+  background: linear-gradient(135deg, var(--flash), #4f6fc4 70%);
   clip-path: polygon(60% 0, 100% 0, 40% 100%, 0% 100%);
-  opacity: 0.9;
+  opacity: 0.85;
+  filter: blur(0.5px);
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -30%;
+  left: -10%;
+  width: 40%;
+  height: 80%;
+  background: radial-gradient(circle, rgba(110,143,227,0.18), transparent 70%);
+  pointer-events: none;
 }
 .hero-inner { position: relative; max-width: 620px; }
 .hero-headline {
@@ -32,7 +43,7 @@
 .section { padding: 80px 0; }
 .section-head { max-width: 560px; margin-bottom: 40px; }
 .section-head h2 { font-size: 30px; margin-bottom: 12px; }
-.section-head p { color: #445; font-size: 16px; }
+.section-head p { color: #4a5568; font-size: 16px; }
 
 .tool-row {
   display: flex;
@@ -88,12 +99,20 @@
 .category-card {
   background: var(--white);
   border: 1.5px solid var(--mist);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 28px 24px;
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 1px 3px rgba(27, 33, 48, 0.06);
+  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 }
-.category-card:hover { border-color: var(--flash); transform: translateY(-2px); }
-.category-icon { color: var(--flash-dim); margin-bottom: 16px; }
+.category-card:hover { border-color: var(--flash); transform: translateY(-3px); box-shadow: 0 14px 28px rgba(27, 33, 48, 0.12); }
+.category-icon {
+  color: var(--flash-dim);
+  margin-bottom: 16px;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(110,143,227,0.14), rgba(110,143,227,0.05));
+}
 .category-card h3 { font-size: 19px; margin-bottom: 6px; }
-.category-card p { color: #556; font-size: 14px; }
+.category-card p { color: #4a5568; font-size: 14px; line-height: 1.55; }
 .landing-more-note { margin-top: 28px; color: #778; font-size: 14px; font-style: italic; }

@@ -5,8 +5,8 @@ import './Landing.css';
 
 const STEPS = [
   { n: 1, title: 'Pick a category', desc: 'Document management, PDF management, speech to text, image tools.' },
-  { n: 2, title: 'Use the tool', desc: 'No sign-up detour, no tier gate — just get straight to it.' },
-  { n: 3, title: 'See the price, confirm, done', desc: "$1 pay-as-you-go, or it's included in your plan — you'll always see it before it runs." },
+  { n: 2, title: 'See what\u2019s included', desc: 'Every tool in that category is described up front — no clicking in blind.' },
+  { n: 3, title: 'Unlock for $1, use anything', desc: "One $1 payment unlocks every tool in that category for a couple of hours — no per-click charges." },
 ];
 
 export default function Landing() {
@@ -19,7 +19,7 @@ export default function Landing() {
           <p className="hero-sub">
             Flewt is a fast, no-clutter set of tools for the everyday tasks that slow
             people down — document and PDF management, speech to text, and more — at a
-            fraction of what the big names charge. Pay per action, or pick a plan.
+            fraction of what the big names charge. $1 unlocks a whole toolkit, or pick a plan.
           </p>
           <div className="hero-actions">
             <Link to="/tools" className="btn btn-flash">Browse tools</Link>
@@ -64,7 +64,7 @@ export default function Landing() {
       <section className="wrap section pricing-teaser">
         <div className="section-head">
           <h2>Priced for actually using it</h2>
-          <p>$1 pay-as-you-go for a single action, or a monthly plan from $3.99 — no tiers to decode, no free-trial games.</p>
+          <p>$1 unlocks a whole category of tools with no subscription, or a monthly plan from $3.99 — no tiers to decode, no free-trial games.</p>
         </div>
         <Link to="/pricing" className="btn btn-outline">Compare plans</Link>
       </section>

@@ -5,11 +5,13 @@ import { apiPost } from '../api.js';
 import './Dashboard.css';
 
 export default function Dashboard() {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, setPlanForTesting } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [testSecret, setTestSecret] = useState('');
+  const [testMsg, setTestMsg] = useState('');
 
   useEffect(() => {
     if (!localStorage.getItem('flewt_token')) {
@@ -34,6 +36,17 @@ export default function Dashboard() {
 
   if (!user) return null;
 
+  const switchPlan = async (plan) => {
+    setTestMsg('');
+    setError('');
+    try {
+      await setPlanForTesting(plan, testSecret);
+      setTestMsg(`Switched to ${plan}.`);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   return (
     <div className="wrap dashboard-page">
       <div className="tool-header">
@@ -45,6 +58,7 @@ export default function Dashboard() {
         <div className="success-banner">You're upgraded to Pro. Thanks for supporting Flewt.</div>
       )}
       {error && <div className="error-banner">{error}</div>}
+      {testMsg && <div className="success-banner">{testMsg}</div>}
 
       <div className="dashboard-cards">
         <div className="dash-card">
@@ -52,7 +66,7 @@ export default function Dashboard() {
           <p className="dash-plan">
             {user.plan === 'pro' && 'Pro — unlimited + batch processing'}
             {user.plan === 'mid' && `Mid — ${user.monthly_actions_used ?? 0}/50 actions used this month`}
-            {(!user.plan || user.plan === 'payg') && 'Pay as you go — $1/£1/€1 per action'}
+            {(!user.plan || user.plan === 'payg') && 'Pay as you go — $1/£1/€1 unlocks a whole category for 2 hours'}
           </p>
           {user.plan === 'pro' || user.plan === 'mid' ? (
             <button className="btn btn-outline" onClick={openPortal} disabled={loading}>
@@ -66,6 +80,26 @@ export default function Dashboard() {
         <div className="dash-card">
           <h3>Quick links</h3>
           <Link to="/tools" className="dash-link">Browse all tools →</Link>
+        </div>
+
+        <div className="dash-card">
+          <h3>Testing (dev only)</h3>
+          <p style={{ fontSize: 13, color: '#667', marginBottom: 10 }}>
+            Switch this account's plan without Stripe, using the secret set in your backend's
+            ADMIN_TEST_SECRET. Leave that env var unset to disable this entirely.
+          </p>
+          <input
+            type="password"
+            placeholder="ADMIN_TEST_SECRET"
+            value={testSecret}
+            onChange={(e) => setTestSecret(e.target.value)}
+            style={{ width: '100%', marginBottom: 10, padding: '8px 10px', border: '1.5px solid var(--mist)', borderRadius: 6 }}
+          />
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button className="btn btn-outline" onClick={() => switchPlan('payg')}>PAYG</button>
+            <button className="btn btn-outline" onClick={() => switchPlan('mid')}>Mid</button>
+            <button className="btn btn-outline" onClick={() => switchPlan('pro')}>Pro</button>
+          </div>
         </div>
       </div>
     </div>

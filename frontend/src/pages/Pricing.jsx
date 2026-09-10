@@ -7,7 +7,7 @@ import CurrencySwitcher from '../components/CurrencySwitcher.jsx';
 import './Pricing.css';
 
 const ROWS = [
-  { label: 'Entry price', flewt: '$1 / action', adobe: '$19.99/mo', smallpdf: '$12.00/mo', ilovepdf: '$9.00/mo' },
+  { label: 'Entry price', flewt: '$1 / category', adobe: '$19.99/mo', smallpdf: '$12.00/mo', ilovepdf: '$9.00/mo' },
   { label: 'Unlimited plan', flewt: '$10.99/mo', adobe: '$19.99/mo', smallpdf: '$12.00/mo', ilovepdf: '$9.00/mo' },
   { label: 'No subscription required', flewt: true, adobe: false, smallpdf: false, ilovepdf: false },
   { label: 'Batch processing', flewt: 'Pro only', adobe: true, smallpdf: true, ilovepdf: true },
@@ -58,7 +58,7 @@ export default function Pricing() {
           <h1>Simple pricing, real savings</h1>
           <CurrencySwitcher />
         </div>
-        <p>Pay per action with no account commitment, or pick a plan once you're using Flewt regularly.</p>
+        <p>Unlock a whole toolkit for $1 with no subscription, or pick a plan once you're using Flewt regularly.</p>
       </div>
 
       {error && <div className="error-banner" style={{ marginBottom: 16 }}>{error}</div>}
@@ -66,8 +66,8 @@ export default function Pricing() {
       <div className="plan-cards plan-cards-3">
         <div className="plan-card">
           <h3>Pay as you go</h3>
-          <div className="plan-price">{prices.symbol}{prices.payg}<span className="plan-price-unit">/action</span></div>
-          <p>No subscription. Confirm the price right before each tool runs.</p>
+          <div className="plan-price">{prices.symbol}{prices.payg}<span className="plan-price-unit">/category</span></div>
+          <p>No subscription. $1 unlocks every tool in one category (e.g. all of PDF Management) for 2 hours.</p>
           <button className="btn btn-outline" onClick={() => navigate(user ? '/tools' : '/signup')}>
             {user ? 'Browse tools' : 'Create free account'}
           </button>
@@ -76,7 +76,7 @@ export default function Pricing() {
         <div className="plan-card">
           <h3>Mid</h3>
           <div className="plan-price">{prices.symbol}{prices.mid}<span className="plan-price-unit">/mo</span></div>
-          <p>50 actions included every month. Single-file tools only.</p>
+          <p>50 actions included every month, across every category. Single-file tools only.</p>
           <button className="btn btn-outline" onClick={() => upgrade('mid')} disabled={loading === 'mid'}>
             {loading === 'mid' ? 'Redirecting…' : 'Choose Mid'}
           </button>
@@ -85,7 +85,7 @@ export default function Pricing() {
         <div className="plan-card plan-card-pro">
           <h3>Pro</h3>
           <div className="plan-price">{prices.symbol}{prices.pro}<span className="plan-price-unit">/mo</span></div>
-          <p>Unlimited actions, plus batch processing — select many files, run one action.</p>
+          <p>Unlimited actions across the whole site, plus batch processing — select many files, run one action.</p>
           <button className="btn btn-flash" onClick={() => upgrade('pro')} disabled={loading === 'pro'}>
             {loading === 'pro' ? 'Redirecting…' : 'Choose Pro'}
           </button>
