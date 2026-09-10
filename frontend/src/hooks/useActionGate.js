@@ -1,47 +1,96 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useCurrency } from '../context/CurrencyContext.jsx';
+import { apiGet } from '../api.js';
 
-const LABELS = {
-  payg: (symbol) => `${symbol}1 per run — you'll confirm payment just before this runs`,
-  mid: () => 'Included in your Mid plan (up to 50 actions/month)',
-  pro: () => 'Included — unlimited on your Pro plan',
+const CATEGORY_LABELS = {
+  'pdf-management': 'PDF Management',
+  'document-management': 'Document Management',
+  'speech-to-text': 'Speech to Text',
+  'image-tools': 'Image Tools',
 };
 
-// Wraps the "run this tool" step so every tool page enforces pricing the same way:
-//   - signed out -> caller shows a sign-in/sign-up prompt instead of the tool
-//   - payg       -> opens inline Stripe checkout for $1/£1/€1, then runs with the paymentIntentId
-//   - mid/pro    -> runs immediately, billing handled server-side by plan
-export function useActionGate() {
+// Gates a tool behind the current pricing model for one category:
+//   - signed out -> caller shows a sign-in/sign-up prompt
+//   - pro        -> always allowed
+//   - mid        -> allowed up to the monthly cap (server enforces the real limit)
+//   - payg       -> allowed only while an active $1 pass for THIS category exists;
+//                   otherwise shows an "unlock this category for $1" prompt
+export function useActionGate(category) {
   const { user } = useAuth();
   const { symbol } = useCurrency();
-  const [showCheckout, setShowCheckout] = useState(false);
+  const [passExpiresAt, setPassExpiresAt] = useState(null);
+  const [checkingAccess, setCheckingAccess] = useState(true);
+  const [showUnlock, setShowUnlock] = useState(false);
   const [pendingRun, setPendingRun] = useState(null);
 
-  const priceLabel = user ? (LABELS[user.plan] || LABELS.payg)(symbol) : 'Sign in to use this tool';
+  const refreshPass = useCallback(async () => {
+    if (!user || user.plan !== 'payg' || !category) {
+      setCheckingAccess(false);
+      return;
+    }
+    try {
+      const { passes } = await apiGet('/billing/passes');
+      const active = passes.find((p) => p.category === category);
+      setPassExpiresAt(active ? active.expires_at : null);
+    } catch {
+      setPassExpiresAt(null);
+    } finally {
+      setCheckingAccess(false);
+    }
+  }, [user, category]);
+
+  useEffect(() => {
+    refreshPass();
+  }, [refreshPass]);
+
   const needsAuth = !user;
+  const hasAccess = user && (user.plan === 'pro' || user.plan === 'mid' || (user.plan === 'payg' && !!passExpiresAt));
+
+  const categoryLabel = CATEGORY_LABELS[category] || 'this category';
+  const priceLabel = !user
+    ? 'Sign in to use this tool'
+    : user.plan === 'pro'
+    ? 'Included — unlimited on your Pro plan'
+    : user.plan === 'mid'
+    ? 'Included in your Mid plan (up to 50 actions/month)'
+    : passExpiresAt
+    ? `Unlocked — access to ${categoryLabel} until ${new Date(passExpiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+    : `Unlock all of ${categoryLabel} for ${symbol}1`;
 
   function gate(run) {
     if (!user) return;
-    if (user.plan === 'payg') {
-      setPendingRun(() => run);
-      setShowCheckout(true);
+    if (hasAccess) {
+      run();
     } else {
-      run(null);
+      setPendingRun(() => run);
+      setShowUnlock(true);
     }
   }
 
-  function onPaid(paymentIntentId) {
-    setShowCheckout(false);
+  async function onUnlocked() {
+    setShowUnlock(false);
+    await refreshPass();
     const run = pendingRun;
     setPendingRun(null);
-    run?.(paymentIntentId);
+    run?.();
   }
 
-  function cancelCheckout() {
-    setShowCheckout(false);
+  function cancelUnlock() {
+    setShowUnlock(false);
     setPendingRun(null);
   }
 
-  return { user, needsAuth, priceLabel, showCheckout, gate, onPaid, cancelCheckout };
+  return {
+    user,
+    needsAuth,
+    hasAccess,
+    checkingAccess,
+    priceLabel,
+    showUnlock,
+    gate,
+    onUnlocked,
+    cancelUnlock,
+    categoryLabel,
+  };
 }
