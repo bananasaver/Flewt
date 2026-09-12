@@ -4,6 +4,7 @@ export const CATEGORIES = [
   {
     slug: 'pdf-management',
     icon: 'pdf',
+    color: 'mint',
     name: 'PDF Management',
     tagline: 'Convert, combine, and clean up PDFs.',
     intro: 'Everything for working with an existing PDF — turning it into another format, reshaping it, or getting information out of it.',
@@ -25,6 +26,7 @@ export const CATEGORIES = [
   {
     slug: 'document-management',
     icon: 'document',
+    color: 'peach',
     name: 'Document Management',
     tagline: 'Fill, sign, scan, and generate real paperwork.',
     intro: 'Tools for the everyday paperwork that isn\u2019t really a "PDF editing" job — filling in a form, signing something, turning phone photos into a document, or generating a new one from scratch.',
@@ -41,6 +43,7 @@ export const CATEGORIES = [
   {
     slug: 'speech-to-text',
     icon: 'mic',
+    color: 'lilac',
     name: 'Speech to Text',
     tagline: 'Turn voice memos into text or a document.',
     intro: 'Upload a recording — a meeting note, a thought on the go, a memo — and get it back as text or a properly formatted PDF.',
@@ -52,12 +55,23 @@ export const CATEGORIES = [
   {
     slug: 'image-tools',
     icon: 'image',
+    color: 'butter',
     name: 'Image Tools',
     tagline: 'Fast, everyday image fixes.',
     intro: 'Quick, everyday image jobs that come up constantly and rarely deserve a whole separate app.',
     tools: [
       { to: '/tools/shrink-image', name: 'Shrink an image', desc: 'Cut a photo\u2019s file size down for uploads, forms, and email attachments.' },
     ],
+  },
+  {
+    slug: 'finance-tools',
+    icon: 'receipt',
+    color: 'blush',
+    name: 'Finance Tools',
+    tagline: 'Quick, easy totals — receipts, income, and expenses.',
+    intro: 'Turn photos of receipts and quick figures into real totals — income, revenue, and expenditure tallies, without a bookkeeping subscription.',
+    tools: [],
+    comingSoon: true,
   },
 ];
 

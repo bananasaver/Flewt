@@ -1,22 +1,40 @@
-/* ---- Flewt design tokens ----
-   Ink:      #1B2130  charcoal-navy / text, hero background
-   Slate:    #3D4A73  blue-grey nav bar
-   Paper:    #EEF1F5  cool light base
-   Flash:    #6E8FE3  cornflower blue — accent, CTAs, the speed-streak motif
-   Flash-dim:#4F6FC4  accent hover state
-   Signal:   #2A3C63  deep blue-grey — links, labels
-   Mist:     #C9CFDB  borders / dividers
+/* ---- Flewt design tokens — sampled directly from the logo, plus the warm/inviting
+   palette approved from the mockup ----
+   Ink:      #16233a  deep navy from the hummingbird's wingtip, darkened for text/bg contrast
+   Slate:    #1e3a5c  navy nav bar (between ink and the logo's mid-wing tone)
+   Cream:    #fdfbf6  warm off-white base — replaces the old cold grey background
+   Flash:    #2f9bc4  the logo's teal-blue, strengthened for button/text contrast
+   Flash-dim:#217a9c  accent hover state — darker teal
+   Signal:   #204777  deep navy from the logo — links, labels
+   Mist:     #c7d3dc  borders / dividers, cool-toned to match
+   Sky:      #9edafb  the logo's pale blue — used sparingly for highlights/glow
+   Mint/Peach/Lilac/Butter/Blush: soft pastel tints, one per category card, so cards
+   read as distinct and colorful rather than identical white boxes
    White:    #FFFFFF
+   Logo gradient: 135deg, Signal -> Flash -> Sky — the same diagonal used in the logo itself
 */
 :root {
-  --ink: #1b2130;
-  --slate: #3d4a73;
-  --paper: #eef1f5;
-  --flash: #6e8fe3;
-  --flash-dim: #4f6fc4;
-  --signal: #2a3c63;
-  --mist: #c9cfdb;
+  --ink: #16233a;
+  --slate: #1e3a5c;
+  --paper: #fdfbf6;
+  --flash: #2f9bc4;
+  --flash-dim: #217a9c;
+  --signal: #204777;
+  --mist: #e4ddce;
+  --sky: #9edafb;
   --white: #ffffff;
+  --logo-gradient: linear-gradient(135deg, var(--signal) 0%, var(--flash) 55%, var(--sky) 100%);
+
+  --mint: #d9f5ec;
+  --mint-ink: #1a7a5e;
+  --peach: #ffe8d6;
+  --peach-ink: #b85c2b;
+  --lilac: #ece3fb;
+  --lilac-ink: #6a4bb8;
+  --butter: #fff3d0;
+  --butter-ink: #a3791a;
+  --blush: #fde3ea;
+  --blush-ink: #c23f68;
 
   --font-display: 'Archivo', sans-serif;
   --font-body: 'IBM Plex Sans', sans-serif;
@@ -66,20 +84,20 @@ button { font-family: inherit; cursor: pointer; }
   justify-content: center;
   gap: 8px;
   padding: 14px 28px;
-  border-radius: 12px;
+  border-radius: 100px;
   border: 2px solid transparent;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 15px;
   transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 .btn:active { transform: scale(0.98); }
 
 .btn-flash {
-  background: var(--flash);
+  background: linear-gradient(135deg, var(--signal), var(--flash));
   color: var(--white);
-  box-shadow: 0 2px 10px rgba(110, 143, 227, 0.35);
+  box-shadow: 0 8px 20px rgba(47, 155, 196, 0.35);
 }
-.btn-flash:hover { background: var(--flash-dim); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(110, 143, 227, 0.4); }
+.btn-flash:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(47, 155, 196, 0.45); }
 
 .btn-outline {
   background: transparent;
@@ -110,7 +128,7 @@ input, select, textarea {
 }
 input:focus, select:focus, textarea:focus {
   border-color: var(--flash);
-  box-shadow: 0 0 0 3px rgba(110, 143, 227, 0.15);
+  box-shadow: 0 0 0 3px rgba(47, 155, 196, 0.15);
   outline: none;
 }
 
@@ -177,10 +195,10 @@ label {
 }
 .guide-step-n {
   flex-shrink: 0;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: var(--flash);
+  background: linear-gradient(135deg, var(--signal), var(--flash));
   color: var(--white);
   display: flex;
   align-items: center;
@@ -193,3 +211,11 @@ label {
 @media (max-width: 720px) {
   .guide-strip { grid-template-columns: 1fr; }
 }
+
+/* Pastel tint utilities — one per category, so cards read as distinct and colorful
+   rather than identical white boxes. Apply alongside .category-card / .cat-card. */
+.pastel-mint { background: var(--mint) !important; --pastel-ink: var(--mint-ink); }
+.pastel-peach { background: var(--peach) !important; --pastel-ink: var(--peach-ink); }
+.pastel-lilac { background: var(--lilac) !important; --pastel-ink: var(--lilac-ink); }
+.pastel-butter { background: var(--butter) !important; --pastel-ink: var(--butter-ink); }
+.pastel-blush { background: var(--blush) !important; --pastel-ink: var(--blush-ink); }
