@@ -10,7 +10,7 @@ export default function Navbar() {
     <header className="nav">
       <div className="wrap nav-inner">
         <Link to="/" className="nav-logo">
-          Flewt<span className="nav-logo-dash">.</span>
+          <img src="/logo.png" alt="Flewt" className="nav-logo-img" />
         </Link>
 
         <nav className="nav-links">

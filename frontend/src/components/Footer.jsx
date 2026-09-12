@@ -6,7 +6,7 @@ export default function Footer() {
     <footer className="footer">
       <div className="wrap footer-inner">
         <div className="footer-brand">
-          <div className="footer-logo">Flewt<span className="nav-logo-dash">.</span></div>
+          <img src="/logo.png" alt="Flewt" className="footer-logo-img" />
           <p className="footer-tag">Fly through your workflow.</p>
         </div>
 
@@ -17,6 +17,7 @@ export default function Footer() {
             <Link to="/tools/document-management">Document Management</Link>
             <Link to="/tools/speech-to-text">Speech to Text</Link>
             <Link to="/tools/image-tools">Image Tools</Link>
+            <Link to="/tools/finance-tools">Finance Tools</Link>
           </div>
           <div className="footer-col">
             <h4>Product</h4>

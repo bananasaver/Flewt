@@ -6,6 +6,7 @@ const paths = {
   image: 'M4 4h16v16H4zM4 16l5-5 4 4 3-3 4 4M9 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z',
   bolt: 'M13 2 3 14h7l-1 8 10-12h-7l1-8z',
   sign: 'M3 20c3-4 6 2 9-2s3-6 6-2M17 6l3 3-9 9-3.5.5.5-3.5z',
+  receipt: 'M5 2h14v20l-2.5-1.5L14 22l-2.5-1.5L9 22l-2.5-1.5L4 22V2h1zM8 8h8M8 12h8M8 16h5',
 };
 
 export default function Icon({ name, size = 28, className = '' }) {
