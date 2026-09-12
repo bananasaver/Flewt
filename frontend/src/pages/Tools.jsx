@@ -12,10 +12,11 @@ export default function Tools() {
       </div>
       <div className="category-grid">
         {CATEGORIES.map((c) => (
-          <Link to={`/tools/${c.slug}`} key={c.slug} className="category-card">
-            <Icon name={c.icon} className="category-icon" />
+          <Link to={`/tools/${c.slug}`} key={c.slug} className={`category-card pastel-${c.color}`}>
+            <span className="category-icon"><Icon name={c.icon} /></span>
             <h3>{c.name}</h3>
             <p>{c.tagline}</p>
+            {c.comingSoon && <span className="category-soon-badge">New</span>}
           </Link>
         ))}
       </div>

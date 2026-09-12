@@ -1,7 +1,8 @@
 .tools-page { padding: 56px 0 80px; }
 .tools-page .tool-header { max-width: 620px; margin-bottom: 40px; }
-.tools-page .tool-header h1 { font-size: 34px; margin-bottom: 12px; }
-.tools-page .tool-header p { color: #445; font-size: 16px; }
+.tools-page .tool-header h1 { font-size: 34px; margin-bottom: 12px; color: var(--ink); }
+.tools-page .tool-header p { color: #4a5568; font-size: 16px; }
+
 .tools-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -10,55 +11,72 @@
 .tool-card {
   background: var(--white);
   border: 1.5px solid var(--mist);
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 26px;
-  box-shadow: 0 1px 3px rgba(27, 33, 48, 0.06);
-  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: 0 1px 3px rgba(27, 33, 48, 0.05);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
-.tool-card:hover { border-color: var(--flash); transform: translateY(-3px); box-shadow: 0 12px 24px rgba(27, 33, 48, 0.1); }
-.tool-card h3 { font-size: 18px; margin-bottom: 8px; }
+.tool-card:hover { transform: translateY(-4px); box-shadow: 0 14px 28px rgba(22,35,58,0.1); }
+.tool-card h3 { font-size: 18px; margin-bottom: 8px; color: var(--ink); }
 .tool-card p { color: #4a5568; font-size: 14px; line-height: 1.55; }
 
+/* Category cards — pastel-tinted (see .pastel-* utilities in index.css), so each
+   category reads as distinct and colorful rather than identical white boxes. */
 .category-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 20px;
 }
 .category-card {
-  background: var(--white);
-  border: 1.5px solid var(--mist);
-  border-radius: 20px;
+  position: relative;
+  border-radius: 22px;
   padding: 30px 26px;
-  box-shadow: 0 1px 3px rgba(27, 33, 48, 0.06);
-  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+  border: none;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
-.category-card:hover { border-color: var(--flash); transform: translateY(-3px); box-shadow: 0 14px 28px rgba(27, 33, 48, 0.12); }
+.category-card:hover { transform: translateY(-5px); box-shadow: 0 16px 32px rgba(22,35,58,0.12); }
 .category-icon {
-  color: var(--flash-dim);
-  margin-bottom: 16px;
   width: 52px;
   height: 52px;
+  border-radius: 14px;
+  background: var(--white);
+  color: var(--pastel-ink, var(--signal));
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(110,143,227,0.14), rgba(110,143,227,0.05));
+  margin-bottom: 18px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.06);
 }
-.category-card h3 { font-size: 19px; margin-bottom: 6px; }
+.category-card h3 { font-size: 19px; margin-bottom: 6px; color: var(--ink); }
 .category-card p { color: #4a5568; font-size: 14px; line-height: 1.55; }
-.tools-more-note { margin-top: 40px; color: #778; font-size: 14px; font-style: italic; }
+.category-soon-badge {
+  position: absolute; top: 20px; right: 20px;
+  background: var(--white); color: var(--pastel-ink, var(--signal));
+  font-size: 11px; font-weight: 800; letter-spacing: 0.03em;
+  padding: 4px 10px; border-radius: 100px;
+}
+.tools-more-note { margin-top: 40px; color: #999; font-size: 14px; font-style: italic; }
 .category-back { display: inline-block; font-size: 13px; font-weight: 600; color: var(--signal); margin-bottom: 16px; }
 .category-header-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
 
 .access-banner {
   background: var(--white);
   border: 1.5px solid var(--mist);
-  border-radius: 16px;
-  padding: 20px 22px;
+  border-radius: 18px;
+  padding: 20px 24px;
   margin-bottom: 32px;
   font-size: 14px;
   color: #334;
-  box-shadow: 0 1px 3px rgba(27, 33, 48, 0.06);
+  box-shadow: 0 1px 3px rgba(27, 33, 48, 0.05);
 }
 .access-unlocked { color: #1e6b2e; font-weight: 600; }
 .access-locked-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+.category-coming-soon {
+  background: var(--white);
+  border: 1.5px dashed var(--mist);
+  border-radius: 18px;
+  padding: 40px;
+  text-align: center;
+  color: #4a5568;
+}
