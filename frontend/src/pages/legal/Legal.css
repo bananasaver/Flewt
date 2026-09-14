@@ -1,4 +1,4 @@
-.legal-page { padding: 64px 0 96px; }
+.legal-page { padding-top: 64px; padding-bottom: 96px; }
 .legal-page h1 { font-size: 32px; margin-bottom: 8px; }
 .legal-page .legal-updated { color: #667; font-size: 13px; margin-bottom: 32px; }
 .legal-page h2 { font-size: 18px; margin-top: 32px; margin-bottom: 10px; }
