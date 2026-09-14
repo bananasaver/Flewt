@@ -92,7 +92,7 @@ export default function Landing() {
 
       <section className="wrap section">
         <div className="price-band">
-          <div>
+          <div className="price-band-text">
             <h2>Priced for actually using it</h2>
             <p>$1 unlocks a whole category of tools with no subscription, or a monthly plan from $3.99 — no tiers to decode, no free-trial games.</p>
           </div>

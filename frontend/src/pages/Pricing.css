@@ -1,4 +1,4 @@
-.pricing-page { padding: 56px 0 80px; }
+.pricing-page { padding-top: 56px; padding-bottom: 80px; }
 .pricing-page .tool-header { max-width: 620px; margin-bottom: 32px; }
 .pricing-page .tool-header h1 { font-size: 34px; margin-bottom: 12px; font-family: var(--font-display); font-weight: 900; }
 .pricing-page .tool-header p { color: #445; font-size: 16px; }
